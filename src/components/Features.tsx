@@ -8,9 +8,9 @@ const Features = () => {
   const features = [
     {
       icon: Brain,
-      title: 'AI-Powered Analysis',
-      description: 'Advanced algorithms analyze your health data to detect potential issues early.',
-      link: 'http://127.0.0.1:7861'
+      title: 'Health Insights & Updates',
+      description: 'Get daily health facts, news updates, and personalized insights.',
+      link: '/health-insights'
     },
     {
       icon: Clipboard,
@@ -20,15 +20,15 @@ const Features = () => {
     },
     {
       icon: Activity,
-      title: 'Real-time Monitoring',
-      description: 'Track vital signs and health metrics in real-time with precision.',
-      link: ''
+      title: 'Medication Tracker',
+      description: 'Manage your medications and get timely reminders.',
+      link: '/medications'
     },
     {
       icon: HeartPulse,
-      title: 'Personalized Care',
-      description: 'Get tailored health recommendations based on your unique data.',
-      link: ''
+      title: 'Appointment Scheduler',
+      description: 'Schedule and manage your healthcare appointments efficiently.',
+      link: '/appointments'
     },
   ];
 
@@ -47,8 +47,8 @@ const Features = () => {
               Cutting-edge Features
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Our advanced AI system provides comprehensive health monitoring and analysis
-              to keep you informed and healthy.
+              Our advanced healthcare platform provides comprehensive monitoring and management
+              tools to keep you healthy and informed.
             </p>
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
