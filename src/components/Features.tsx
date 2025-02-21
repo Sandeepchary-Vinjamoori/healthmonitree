@@ -2,6 +2,7 @@
 import FeatureCard from './FeatureCard';
 import { Activity, Clipboard, Brain, HeartPulse } from 'lucide-react';
 import { motion } from 'framer-motion';
+import EmergencyAccess from './EmergencyAccess';
 
 const Features = () => {
   const features = [

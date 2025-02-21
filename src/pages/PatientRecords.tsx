@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, File, Trash2, Eye, Download, Loader2 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import {
   Table,
@@ -44,7 +44,6 @@ const PatientRecords = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg'];
       if (!allowedTypes.includes(file.type)) {
         toast({
@@ -56,7 +55,7 @@ const PatientRecords = () => {
       }
 
       setSelectedFile(file);
-      setDocumentName(file.name); // Pre-fill name with file name
+      setDocumentName(file.name);
     }
   };
 
@@ -72,7 +71,6 @@ const PatientRecords = () => {
 
     setIsUploading(true);
     try {
-      // Simulate upload delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const newDocument: Document = {
@@ -132,12 +130,12 @@ const PatientRecords = () => {
   const downloadDocument = (document: Document) => {
     if (document.file) {
       const fileURL = URL.createObjectURL(document.file);
-      const a = document.createElement('a');
+      const a = window.document.createElement('a');
       a.href = fileURL;
       a.download = document.fileName;
-      document.body.appendChild(a);
+      window.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
       URL.revokeObjectURL(fileURL);
 
       toast({
