@@ -12,11 +12,11 @@ const NavBar = () => {
             <span className="text-2xl font-bold text-primary">HealthMoniTree</span>
           </Link>
           <div className="flex items-center space-x-4">
-            <Link to="/">
-              <Button variant="ghost">Home</Button>
+            <Link to="/login">
+              <Button variant="ghost">Sign In</Button>
             </Link>
-            <Link to="/health-data">
-              <Button>Start Monitoring</Button>
+            <Link to="/signup">
+              <Button>Sign Up</Button>
             </Link>
           </div>
         </div>
