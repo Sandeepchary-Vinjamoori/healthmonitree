@@ -6,53 +6,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [activeTab, setActiveTab] = useState('login');
-  const { toast } = useToast();
+  const { signIn, signUp, loading, user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Get mode from URL params
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(location.search);
     const mode = urlParams.get('mode');
     if (mode === 'signup') {
       setActiveTab('signup');
+    } else {
+      setActiveTab('login');
     }
-  }, []);
+    
+    // If user is already logged in, redirect to dashboard
+    if (user) {
+      const returnTo = urlParams.get('returnTo');
+      navigate(returnTo || '/dashboard');
+    }
+  }, [location, user, navigate]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate authentication
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to HealthMoniTree!",
-      });
-      // Redirect to main app
-      window.location.href = '/health-data';
-    }, 2000);
+    await signIn(email, password);
   };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate account creation
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Account Created",
-        description: "Welcome to HealthMoniTree! You can now access your dashboard.",
-      });
-      // Redirect to main app
-      window.location.href = '/health-data';
-    }, 2000);
+    await signUp(email, password, fullName);
   };
 
   const goBack = () => {
@@ -60,13 +51,13 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 flex items-center justify-center p-4">
       {/* Background Animation */}
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }).map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-blue-400/20 rounded-full"
+            className="absolute w-1 h-1 bg-green-400/20 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -94,7 +85,7 @@ const AuthPage = () => {
           <Button
             variant="ghost"
             onClick={goBack}
-            className="text-white hover:text-blue-200 hover:bg-white/10"
+            className="text-white hover:text-green-200 hover:bg-white/10"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
@@ -112,17 +103,17 @@ const AuthPage = () => {
               <CardTitle className="text-2xl font-bold text-white">
                 HealthMoniTree
               </CardTitle>
-              <CardDescription className="text-blue-200">
+              <CardDescription className="text-green-200">
                 Access your health monitoring dashboard
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2 bg-white/10">
-                  <TabsTrigger value="login" className="text-white data-[state=active]:bg-blue-600">
+                  <TabsTrigger value="login" className="text-white data-[state=active]:bg-green-600">
                     Login
                   </TabsTrigger>
-                  <TabsTrigger value="signup" className="text-white data-[state=active]:bg-blue-600">
+                  <TabsTrigger value="signup" className="text-white data-[state=active]:bg-green-600">
                     Sign Up
                   </TabsTrigger>
                 </TabsList>
@@ -137,6 +128,8 @@ const AuthPage = () => {
                           type="email"
                           placeholder="Enter your email"
                           className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                           required
                         />
                       </div>
@@ -149,6 +142,8 @@ const AuthPage = () => {
                           type={showPassword ? "text" : "password"}
                           placeholder="Enter your password"
                           className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
                           required
                         />
                         <button
@@ -162,10 +157,10 @@ const AuthPage = () => {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      disabled={isLoading}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      disabled={loading}
                     >
-                      {isLoading ? "Logging in..." : "Login"}
+                      {loading ? "Logging in..." : "Login"}
                     </Button>
                   </form>
                 </TabsContent>
@@ -180,6 +175,8 @@ const AuthPage = () => {
                           type="text"
                           placeholder="Enter your full name"
                           className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
                           required
                         />
                       </div>
@@ -192,6 +189,8 @@ const AuthPage = () => {
                           type="email"
                           placeholder="Enter your email"
                           className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                           required
                         />
                       </div>
@@ -204,6 +203,8 @@ const AuthPage = () => {
                           type={showPassword ? "text" : "password"}
                           placeholder="Create a password"
                           className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
                           required
                         />
                         <button
@@ -217,10 +218,10 @@ const AuthPage = () => {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      disabled={isLoading}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      disabled={loading}
                     >
-                      {isLoading ? "Creating Account..." : "Create Account"}
+                      {loading ? "Creating Account..." : "Create Account"}
                     </Button>
                   </form>
                 </TabsContent>

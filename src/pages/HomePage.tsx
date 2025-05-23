@@ -3,14 +3,23 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { LogIn, UserPlus, Activity, Shield, Zap } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const handleLogin = () => {
-    window.location.href = '/auth?mode=login';
+    navigate('/auth?mode=login');
   };
 
   const handleSignUp = () => {
-    window.location.href = '/auth?mode=signup';
+    navigate('/auth?mode=signup');
+  };
+
+  const handleDashboard = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -114,23 +123,36 @@ const HomePage = () => {
               transition={{ duration: 1, delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
-              <Button
-                onClick={handleLogin}
-                size="lg"
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              >
-                <LogIn className="h-5 w-5 mr-2" />
-                Login to Dashboard
-              </Button>
-              <Button
-                onClick={handleSignUp}
-                size="lg"
-                variant="outline"
-                className="border-2 border-green-600 text-green-600 hover:bg-green-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              >
-                <UserPlus className="h-5 w-5 mr-2" />
-                Create Account
-              </Button>
+              {user ? (
+                <Button
+                  onClick={handleDashboard}
+                  size="lg"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                >
+                  <Activity className="h-5 w-5 mr-2" />
+                  Go to Dashboard
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    onClick={handleLogin}
+                    size="lg"
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    <LogIn className="h-5 w-5 mr-2" />
+                    Login to Dashboard
+                  </Button>
+                  <Button
+                    onClick={handleSignUp}
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-green-600 text-green-600 hover:bg-green-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    <UserPlus className="h-5 w-5 mr-2" />
+                    Create Account
+                  </Button>
+                </>
+              )}
             </motion.div>
 
             {/* Additional Info */}

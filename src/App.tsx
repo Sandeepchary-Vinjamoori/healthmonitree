@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import Index from "./pages/Index";
@@ -21,16 +23,53 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/dashboard" element={<Index />} />
-          <Route path="/health-data" element={<HealthDataEntry />} />
-          <Route path="/patient-records" element={<PatientRecords />} />
-          <Route path="/medications" element={<MedicationTracker />} />
-          <Route path="/appointments" element={<AppointmentScheduler />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/health-data" 
+              element={
+                <ProtectedRoute>
+                  <HealthDataEntry />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/patient-records" 
+              element={
+                <ProtectedRoute>
+                  <PatientRecords />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/medications" 
+              element={
+                <ProtectedRoute>
+                  <MedicationTracker />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/appointments" 
+              element={
+                <ProtectedRoute>
+                  <AppointmentScheduler />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
