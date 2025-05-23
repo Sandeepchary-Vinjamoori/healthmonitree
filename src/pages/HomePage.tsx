@@ -13,15 +13,15 @@ const Molecule = ({ position }: { position: [number, number, number] }) => {
       <group position={position}>
         <mesh>
           <sphereGeometry args={[0.3, 32, 32]} />
-          <meshStandardMaterial color="#3b82f6" emissive="#1d4ed8" emissiveIntensity={0.2} />
+          <meshStandardMaterial color="#10b981" emissive="#059669" emissiveIntensity={0.2} />
         </mesh>
         <mesh position={[1, 0, 0]}>
           <sphereGeometry args={[0.2, 16, 16]} />
-          <meshStandardMaterial color="#ef4444" emissive="#dc2626" emissiveIntensity={0.2} />
+          <meshStandardMaterial color="#22c55e" emissive="#16a34a" emissiveIntensity={0.2} />
         </mesh>
         <mesh position={[-1, 0, 0]}>
           <sphereGeometry args={[0.2, 16, 16]} />
-          <meshStandardMaterial color="#10b981" emissive="#059669" emissiveIntensity={0.2} />
+          <meshStandardMaterial color="#34d399" emissive="#10b981" emissiveIntensity={0.2} />
         </mesh>
         {/* Connecting lines */}
         <mesh position={[0.5, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
@@ -44,11 +44,11 @@ const HealthCross = () => {
       <group>
         <mesh>
           <boxGeometry args={[2, 0.5, 0.5]} />
-          <meshStandardMaterial color="#ef4444" emissive="#dc2626" emissiveIntensity={0.1} />
+          <meshStandardMaterial color="#10b981" emissive="#059669" emissiveIntensity={0.1} />
         </mesh>
         <mesh>
           <boxGeometry args={[0.5, 2, 0.5]} />
-          <meshStandardMaterial color="#ef4444" emissive="#dc2626" emissiveIntensity={0.1} />
+          <meshStandardMaterial color="#10b981" emissive="#059669" emissiveIntensity={0.1} />
         </mesh>
       </group>
     </Float>
@@ -63,7 +63,7 @@ const Scene3D = () => {
       <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
       <ambientLight intensity={0.3} />
       <directionalLight position={[10, 10, 5]} intensity={1} />
-      <pointLight position={[-10, -10, -5]} intensity={0.5} color="#3b82f6" />
+      <pointLight position={[-10, -10, -5]} intensity={0.5} color="#10b981" />
       
       <Environment preset="city" />
       
@@ -88,8 +88,8 @@ const Scene3D = () => {
           ]}>
             <sphereGeometry args={[0.05, 8, 8]} />
             <meshStandardMaterial 
-              color={`hsl(${Math.random() * 360}, 70%, 60%)`} 
-              emissive={`hsl(${Math.random() * 360}, 70%, 30%)`}
+              color={`hsl(${120 + Math.random() * 60}, 70%, 60%)`} 
+              emissive={`hsl(${120 + Math.random() * 60}, 70%, 30%)`}
               emissiveIntensity={0.2}
             />
           </mesh>
@@ -109,7 +109,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-white relative overflow-hidden">
       {/* 3D Background - Canvas wraps only the 3D scene */}
       <div className="absolute inset-0 z-0">
         <Canvas>
@@ -130,13 +130,13 @@ const HomePage = () => {
               transition={{ duration: 1 }}
               className="mb-8"
             >
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 bg-gradient-to-r from-white via-blue-200 to-white bg-clip-text text-transparent">
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 bg-gradient-to-r from-gray-800 via-green-600 to-gray-800 bg-clip-text text-transparent">
                 HealthMoniTree
               </h1>
-              <p className="text-xl md:text-2xl text-blue-200 mb-4">
+              <p className="text-xl md:text-2xl text-green-700 mb-4">
                 AI-Powered Health Monitoring System
               </p>
-              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Experience the future of healthcare with advanced 3D visualization, 
                 real-time monitoring, and intelligent insights powered by artificial intelligence.
               </p>
@@ -149,20 +149,20 @@ const HomePage = () => {
               transition={{ duration: 1, delay: 0.3 }}
               className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto"
             >
-              <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
-                <Activity className="h-8 w-8 text-blue-400 mx-auto mb-3" />
-                <h3 className="text-white font-semibold mb-2">Real-time Monitoring</h3>
-                <p className="text-gray-300 text-sm">Track your health metrics in real-time with advanced sensors</p>
+              <div className="bg-green-50/80 backdrop-blur-md rounded-lg p-6 border border-green-200">
+                <Activity className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                <h3 className="text-gray-800 font-semibold mb-2">Real-time Monitoring</h3>
+                <p className="text-gray-600 text-sm">Track your health metrics in real-time with advanced sensors</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
-                <Shield className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                <h3 className="text-white font-semibold mb-2">Secure & Private</h3>
-                <p className="text-gray-300 text-sm">Your health data is protected with enterprise-grade security</p>
+              <div className="bg-green-50/80 backdrop-blur-md rounded-lg p-6 border border-green-200">
+                <Shield className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                <h3 className="text-gray-800 font-semibold mb-2">Secure & Private</h3>
+                <p className="text-gray-600 text-sm">Your health data is protected with enterprise-grade security</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
-                <Zap className="h-8 w-8 text-yellow-400 mx-auto mb-3" />
-                <h3 className="text-white font-semibold mb-2">AI Insights</h3>
-                <p className="text-gray-300 text-sm">Get personalized recommendations from our AI system</p>
+              <div className="bg-green-50/80 backdrop-blur-md rounded-lg p-6 border border-green-200">
+                <Zap className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                <h3 className="text-gray-800 font-semibold mb-2">AI Insights</h3>
+                <p className="text-gray-600 text-sm">Get personalized recommendations from our AI system</p>
               </div>
             </motion.div>
 
@@ -176,7 +176,7 @@ const HomePage = () => {
               <Button
                 onClick={handleLogin}
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 <LogIn className="h-5 w-5 mr-2" />
                 Login to Dashboard
@@ -185,7 +185,7 @@ const HomePage = () => {
                 onClick={handleSignUp}
                 size="lg"
                 variant="outline"
-                className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="border-2 border-green-600 text-green-600 hover:bg-green-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 <UserPlus className="h-5 w-5 mr-2" />
                 Create Account
@@ -199,7 +199,7 @@ const HomePage = () => {
               transition={{ duration: 1, delay: 0.9 }}
               className="mt-12"
             >
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-500 text-sm">
                 Join thousands of users who trust HealthMoniTree for their health monitoring needs
               </p>
             </motion.div>
@@ -212,7 +212,7 @@ const HomePage = () => {
         {Array.from({ length: 10 }).map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-blue-400/30 rounded-full"
+            className="absolute w-2 h-2 bg-green-400/30 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
