@@ -55,50 +55,6 @@ const HealthCross = () => {
   );
 };
 
-// 3D Scene Component - This contains all the Three.js elements
-const Scene3D = () => {
-  return (
-    <>
-      <PerspectiveCamera makeDefault position={[0, 0, 10]} />
-      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      <pointLight position={[-10, -10, -5]} intensity={0.5} color="#10b981" />
-      
-      <Environment preset="city" />
-      
-      {/* Main Health Cross */}
-      <group position={[0, 0, 0]}>
-        <HealthCross />
-      </group>
-      
-      {/* Floating Molecules */}
-      <Molecule position={[-4, 2, -2]} />
-      <Molecule position={[4, -1, 1]} />
-      <Molecule position={[-3, -2, 2]} />
-      <Molecule position={[3, 2, -1]} />
-      
-      {/* Floating Particles */}
-      {Array.from({ length: 20 }).map((_, i) => (
-        <Float key={i} speed={Math.random() * 2 + 1} rotationIntensity={1} floatIntensity={2}>
-          <mesh position={[
-            (Math.random() - 0.5) * 20,
-            (Math.random() - 0.5) * 20,
-            (Math.random() - 0.5) * 10
-          ]}>
-            <sphereGeometry args={[0.05, 8, 8]} />
-            <meshStandardMaterial 
-              color={`hsl(${120 + Math.random() * 60}, 70%, 60%)`} 
-              emissive={`hsl(${120 + Math.random() * 60}, 70%, 30%)`}
-              emissiveIntensity={0.2}
-            />
-          </mesh>
-        </Float>
-      ))}
-    </>
-  );
-};
-
 const HomePage = () => {
   const handleLogin = () => {
     window.location.href = '/auth?mode=login';
@@ -114,7 +70,42 @@ const HomePage = () => {
       <div className="absolute inset-0 z-0">
         <Canvas>
           <Suspense fallback={null}>
-            <Scene3D />
+            <PerspectiveCamera makeDefault position={[0, 0, 10]} />
+            <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
+            <ambientLight intensity={0.3} />
+            <directionalLight position={[10, 10, 5]} intensity={1} />
+            <pointLight position={[-10, -10, -5]} intensity={0.5} color="#10b981" />
+            
+            <Environment preset="city" />
+            
+            {/* Main Health Cross */}
+            <group position={[0, 0, 0]}>
+              <HealthCross />
+            </group>
+            
+            {/* Floating Molecules */}
+            <Molecule position={[-4, 2, -2]} />
+            <Molecule position={[4, -1, 1]} />
+            <Molecule position={[-3, -2, 2]} />
+            <Molecule position={[3, 2, -1]} />
+            
+            {/* Floating Particles */}
+            {Array.from({ length: 20 }).map((_, i) => (
+              <Float key={i} speed={Math.random() * 2 + 1} rotationIntensity={1} floatIntensity={2}>
+                <mesh position={[
+                  (Math.random() - 0.5) * 20,
+                  (Math.random() - 0.5) * 20,
+                  (Math.random() - 0.5) * 10
+                ]}>
+                  <sphereGeometry args={[0.05, 8, 8]} />
+                  <meshStandardMaterial 
+                    color={`hsl(${120 + Math.random() * 60}, 70%, 60%)`} 
+                    emissive={`hsl(${120 + Math.random() * 60}, 70%, 30%)`}
+                    emissiveIntensity={0.2}
+                  />
+                </mesh>
+              </Float>
+            ))}
           </Suspense>
         </Canvas>
       </div>
