@@ -1,59 +1,8 @@
 
-import React, { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Float, Environment, PerspectiveCamera } from '@react-three/drei';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { LogIn, UserPlus, Activity, Shield, Zap } from 'lucide-react';
-
-// 3D Animated Molecules Component
-const Molecule = ({ position }: { position: [number, number, number] }) => {
-  return (
-    <Float speed={2} rotationIntensity={1} floatIntensity={2}>
-      <group position={position}>
-        <mesh>
-          <sphereGeometry args={[0.3, 32, 32]} />
-          <meshStandardMaterial color="#10b981" emissive="#059669" emissiveIntensity={0.2} />
-        </mesh>
-        <mesh position={[1, 0, 0]}>
-          <sphereGeometry args={[0.2, 16, 16]} />
-          <meshStandardMaterial color="#22c55e" emissive="#16a34a" emissiveIntensity={0.2} />
-        </mesh>
-        <mesh position={[-1, 0, 0]}>
-          <sphereGeometry args={[0.2, 16, 16]} />
-          <meshStandardMaterial color="#34d399" emissive="#10b981" emissiveIntensity={0.2} />
-        </mesh>
-        {/* Connecting lines */}
-        <mesh position={[0.5, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.02, 0.02, 1, 8]} />
-          <meshStandardMaterial color="#6b7280" />
-        </mesh>
-        <mesh position={[-0.5, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.02, 0.02, 1, 8]} />
-          <meshStandardMaterial color="#6b7280" />
-        </mesh>
-      </group>
-    </Float>
-  );
-};
-
-// 3D Health Cross Component
-const HealthCross = () => {
-  return (
-    <Float speed={1.5} rotationIntensity={0.5} floatIntensity={1}>
-      <group>
-        <mesh>
-          <boxGeometry args={[2, 0.5, 0.5]} />
-          <meshStandardMaterial color="#10b981" emissive="#059669" emissiveIntensity={0.1} />
-        </mesh>
-        <mesh>
-          <boxGeometry args={[0.5, 2, 0.5]} />
-          <meshStandardMaterial color="#10b981" emissive="#059669" emissiveIntensity={0.1} />
-        </mesh>
-      </group>
-    </Float>
-  );
-};
 
 const HomePage = () => {
   const handleLogin = () => {
@@ -65,49 +14,50 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-white relative overflow-hidden">
-      {/* 3D Background - Canvas wraps only the 3D scene */}
+    <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-emerald-50 relative overflow-hidden">
+      {/* Animated Background Elements */}
       <div className="absolute inset-0 z-0">
-        <Canvas>
-          <Suspense fallback={null}>
-            <PerspectiveCamera makeDefault position={[0, 0, 10]} />
-            <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
-            <ambientLight intensity={0.3} />
-            <directionalLight position={[10, 10, 5]} intensity={1} />
-            <pointLight position={[-10, -10, -5]} intensity={0.5} color="#10b981" />
-            
-            <Environment preset="city" />
-            
-            {/* Main Health Cross */}
-            <group position={[0, 0, 0]}>
-              <HealthCross />
-            </group>
-            
-            {/* Floating Molecules */}
-            <Molecule position={[-4, 2, -2]} />
-            <Molecule position={[4, -1, 1]} />
-            <Molecule position={[-3, -2, 2]} />
-            <Molecule position={[3, 2, -1]} />
-            
-            {/* Floating Particles */}
-            {Array.from({ length: 20 }).map((_, i) => (
-              <Float key={i} speed={Math.random() * 2 + 1} rotationIntensity={1} floatIntensity={2}>
-                <mesh position={[
-                  (Math.random() - 0.5) * 20,
-                  (Math.random() - 0.5) * 20,
-                  (Math.random() - 0.5) * 10
-                ]}>
-                  <sphereGeometry args={[0.05, 8, 8]} />
-                  <meshStandardMaterial 
-                    color={`hsl(${120 + Math.random() * 60}, 70%, 60%)`} 
-                    emissive={`hsl(${120 + Math.random() * 60}, 70%, 30%)`}
-                    emissiveIntensity={0.2}
-                  />
-                </mesh>
-              </Float>
-            ))}
-          </Suspense>
-        </Canvas>
+        {/* Floating Circles */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-green-200/30 rounded-full animate-float"></div>
+        <div className="absolute top-40 right-20 w-32 h-32 bg-emerald-300/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-16 h-16 bg-green-400/25 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-20 right-1/3 w-24 h-24 bg-emerald-200/30 rounded-full animate-float" style={{ animationDelay: '0.5s' }}></div>
+        
+        {/* Medical Cross Background */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-5">
+          <div className="relative">
+            <div className="w-96 h-24 bg-green-600 rounded-lg"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-96 bg-green-600 rounded-lg"></div>
+          </div>
+        </div>
+
+        {/* Gradient Orbs */}
+        <div className="absolute top-1/4 left-1/2 w-64 h-64 bg-gradient-to-r from-green-300/20 to-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-gradient-to-l from-emerald-300/20 to-green-500/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      {/* Animated Particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {Array.from({ length: 15 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-green-400/40 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+              scale: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: Math.random() * 4 + 3,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
       </div>
 
       {/* Content Overlay */}
@@ -121,14 +71,14 @@ const HomePage = () => {
               transition={{ duration: 1 }}
               className="mb-8"
             >
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 bg-gradient-to-r from-gray-800 via-green-600 to-gray-800 bg-clip-text text-transparent">
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 bg-gradient-to-r from-gray-800 via-green-600 to-emerald-700 bg-clip-text text-transparent">
                 HealthMoniTree
               </h1>
-              <p className="text-xl md:text-2xl text-green-700 mb-4">
+              <p className="text-xl md:text-2xl text-green-700 mb-4 font-medium">
                 AI-Powered Health Monitoring System
               </p>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Experience the future of healthcare with advanced 3D visualization, 
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Experience the future of healthcare with advanced visualization, 
                 real-time monitoring, and intelligent insights powered by artificial intelligence.
               </p>
             </motion.div>
@@ -140,17 +90,17 @@ const HomePage = () => {
               transition={{ duration: 1, delay: 0.3 }}
               className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto"
             >
-              <div className="bg-green-50/80 backdrop-blur-md rounded-lg p-6 border border-green-200">
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <Activity className="h-8 w-8 text-green-600 mx-auto mb-3" />
                 <h3 className="text-gray-800 font-semibold mb-2">Real-time Monitoring</h3>
                 <p className="text-gray-600 text-sm">Track your health metrics in real-time with advanced sensors</p>
               </div>
-              <div className="bg-green-50/80 backdrop-blur-md rounded-lg p-6 border border-green-200">
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <Shield className="h-8 w-8 text-green-600 mx-auto mb-3" />
                 <h3 className="text-gray-800 font-semibold mb-2">Secure & Private</h3>
                 <p className="text-gray-600 text-sm">Your health data is protected with enterprise-grade security</p>
               </div>
-              <div className="bg-green-50/80 backdrop-blur-md rounded-lg p-6 border border-green-200">
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <Zap className="h-8 w-8 text-green-600 mx-auto mb-3" />
                 <h3 className="text-gray-800 font-semibold mb-2">AI Insights</h3>
                 <p className="text-gray-600 text-sm">Get personalized recommendations from our AI system</p>
@@ -198,27 +148,29 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Floating Animation Overlay */}
-      <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-green-400/30 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -100, 0],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
+      {/* Decorative Health Icons */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          className="absolute top-1/4 left-20 text-green-200/20"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        >
+          <Activity size={48} />
+        </motion.div>
+        <motion.div
+          className="absolute bottom-1/3 right-16 text-emerald-200/20"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        >
+          <Shield size={56} />
+        </motion.div>
+        <motion.div
+          className="absolute top-1/2 right-1/4 text-green-300/20"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        >
+          <Zap size={40} />
+        </motion.div>
       </div>
     </div>
   );
