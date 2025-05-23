@@ -1,7 +1,7 @@
 
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Float, Text3D, Environment, PerspectiveCamera } from '@react-three/drei';
+import { OrbitControls, Float, Environment, PerspectiveCamera } from '@react-three/drei';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { LogIn, UserPlus, Activity, Shield, Zap } from 'lucide-react';
@@ -55,7 +55,7 @@ const HealthCross = () => {
   );
 };
 
-// 3D Scene Component
+// 3D Scene Component - This contains all the Three.js elements
 const Scene3D = () => {
   return (
     <>
@@ -110,7 +110,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
-      {/* 3D Background */}
+      {/* 3D Background - Canvas wraps only the 3D scene */}
       <div className="absolute inset-0 z-0">
         <Canvas>
           <Suspense fallback={null}>
