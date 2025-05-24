@@ -51,13 +51,13 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-teal-900 via-teal-800 to-teal-900 flex items-center justify-center p-4">
       {/* Background Animation */}
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }).map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-green-400/20 rounded-full"
+            className="absolute w-1 h-1 bg-teal-400/20 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -85,7 +85,7 @@ const AuthPage = () => {
           <Button
             variant="ghost"
             onClick={goBack}
-            className="text-white hover:text-green-200 hover:bg-white/10"
+            className="text-white hover:text-teal-200 hover:bg-white/10"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
@@ -103,17 +103,17 @@ const AuthPage = () => {
               <CardTitle className="text-2xl font-bold text-white">
                 HealthMoniTree
               </CardTitle>
-              <CardDescription className="text-green-200">
+              <CardDescription className="text-teal-200">
                 Access your health monitoring dashboard
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2 bg-white/10">
-                  <TabsTrigger value="login" className="text-white data-[state=active]:bg-green-600">
+                  <TabsTrigger value="login" className="text-white data-[state=active]:bg-teal-600">
                     Login
                   </TabsTrigger>
-                  <TabsTrigger value="signup" className="text-white data-[state=active]:bg-green-600">
+                  <TabsTrigger value="signup" className="text-white data-[state=active]:bg-teal-600">
                     Sign Up
                   </TabsTrigger>
                 </TabsList>
@@ -157,7 +157,7 @@ const AuthPage = () => {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full bg-teal-600 hover:bg-teal-700"
                       disabled={loading}
                     >
                       {loading ? "Logging in..." : "Login"}
@@ -218,7 +218,7 @@ const AuthPage = () => {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full bg-teal-600 hover:bg-teal-700"
                       disabled={loading}
                     >
                       {loading ? "Creating Account..." : "Create Account"}
