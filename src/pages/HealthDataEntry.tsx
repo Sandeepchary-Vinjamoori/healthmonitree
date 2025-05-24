@@ -14,7 +14,7 @@ const HealthDataEntry = () => {
       <NavBar />
       <div className="container mx-auto px-4 py-20">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-green-700">Health Data Dashboard</h1>
+          <h1 className="text-3xl font-bold text-teal-700">Health Data Dashboard</h1>
           {user && (
             <p className="text-gray-600 mt-2">
               Welcome, {user.email}! Track and monitor your health data below.
