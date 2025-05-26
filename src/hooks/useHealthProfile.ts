@@ -50,7 +50,13 @@ export const useHealthProfile = () => {
       if (error) throw error;
 
       if (data) {
-        setProfile(data);
+        // Type assertion to ensure proper typing
+        const typedProfile: HealthProfile = {
+          ...data,
+          gender: data.gender as 'male' | 'female' | 'other',
+          activity_level: data.activity_level as 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'super_active'
+        };
+        setProfile(typedProfile);
         setHasProfile(true);
       } else {
         setHasProfile(false);
@@ -99,7 +105,13 @@ export const useHealthProfile = () => {
 
       if (error) throw error;
 
-      setProfile(data);
+      // Type assertion to ensure proper typing
+      const typedProfile: HealthProfile = {
+        ...data,
+        gender: data.gender as 'male' | 'female' | 'other',
+        activity_level: data.activity_level as 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'super_active'
+      };
+      setProfile(typedProfile);
       setHasProfile(true);
 
       // Add initial weight record if weight is provided
@@ -143,7 +155,13 @@ export const useHealthProfile = () => {
 
       if (error) throw error;
 
-      setProfile(data);
+      // Type assertion to ensure proper typing
+      const typedProfile: HealthProfile = {
+        ...data,
+        gender: data.gender as 'male' | 'female' | 'other',
+        activity_level: data.activity_level as 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'super_active'
+      };
+      setProfile(typedProfile);
 
       // Add weight record if weight was updated
       if (profileData.weight && profileData.weight !== profile.weight) {
