@@ -41,8 +41,8 @@ const HealthDashboard = ({ patientData }: HealthDashboardProps) => {
     >
       {/* Patient Info */}
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-          <span className="text-2xl font-bold text-primary">
+        <div className="w-16 h-16 bg-teal-600/10 rounded-full flex items-center justify-center">
+          <span className="text-2xl font-bold text-teal-600">
             {patientData.patientName.charAt(0)}
           </span>
         </div>
@@ -78,9 +78,9 @@ const HealthDashboard = ({ patientData }: HealthDashboardProps) => {
 
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-2">
-            <HeartPulse className="text-green-500" />
+            <HeartPulse className="text-teal-500" />
             <span>Heart Rate</span>
-            <span className="ml-auto text-green-500">Normal</span>
+            <span className="ml-auto text-teal-500">Normal</span>
           </div>
           <div className="text-3xl font-bold">72</div>
           <div className="text-sm text-gray-500">bpm</div>
@@ -90,7 +90,7 @@ const HealthDashboard = ({ patientData }: HealthDashboardProps) => {
           <div className="flex items-center gap-2 mb-2">
             <Droplet className="text-blue-500" />
             <span>Blood Sugar</span>
-            <span className="ml-auto text-green-500">Normal</span>
+            <span className="ml-auto text-teal-500">Normal</span>
           </div>
           <div className="text-3xl font-bold">95</div>
           <div className="text-sm text-gray-500">mg/dL</div>
@@ -137,9 +137,9 @@ const HealthDashboard = ({ patientData }: HealthDashboardProps) => {
               <Line
                 type="monotone"
                 dataKey="bmi"
-                stroke="#0FB5AE"
+                stroke="#14B8A6"
                 strokeWidth={2}
-                dot={{ fill: '#0FB5AE' }}
+                dot={{ fill: '#14B8A6' }}
               />
             </LineChart>
           </ResponsiveContainer>

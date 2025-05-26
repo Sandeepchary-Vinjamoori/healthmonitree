@@ -9,6 +9,99 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      health_metrics: {
+        Row: {
+          blood_pressure_diastolic: number | null
+          blood_pressure_systolic: number | null
+          blood_sugar: number | null
+          heart_rate: number | null
+          id: string
+          oxygen_level: number | null
+          recorded_at: string
+          temperature: number | null
+          user_id: string
+        }
+        Insert: {
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          blood_sugar?: number | null
+          heart_rate?: number | null
+          id?: string
+          oxygen_level?: number | null
+          recorded_at?: string
+          temperature?: number | null
+          user_id: string
+        }
+        Update: {
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          blood_sugar?: number | null
+          heart_rate?: number | null
+          id?: string
+          oxygen_level?: number | null
+          recorded_at?: string
+          temperature?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      health_profiles: {
+        Row: {
+          activity_level: string | null
+          age: number | null
+          alcohol: boolean | null
+          allergies: string | null
+          blood_group: string | null
+          created_at: string
+          emergency_contact: string | null
+          gender: string | null
+          height: number | null
+          id: string
+          medical_conditions: string | null
+          medications: string | null
+          smoking: boolean | null
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          activity_level?: string | null
+          age?: number | null
+          alcohol?: boolean | null
+          allergies?: string | null
+          blood_group?: string | null
+          created_at?: string
+          emergency_contact?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          medical_conditions?: string | null
+          medications?: string | null
+          smoking?: boolean | null
+          updated_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          activity_level?: string | null
+          age?: number | null
+          alcohol?: boolean | null
+          allergies?: string | null
+          blood_group?: string | null
+          created_at?: string
+          emergency_contact?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          medical_conditions?: string | null
+          medications?: string | null
+          smoking?: boolean | null
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -30,6 +123,27 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      weight_history: {
+        Row: {
+          id: string
+          recorded_at: string
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          id?: string
+          recorded_at?: string
+          user_id: string
+          weight: number
+        }
+        Update: {
+          id?: string
+          recorded_at?: string
+          user_id?: string
+          weight?: number
         }
         Relationships: []
       }
