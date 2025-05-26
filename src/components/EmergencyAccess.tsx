@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Phone, MessageSquare, Bell, Navigation } from 'lucide-react';
+import { Phone, MessageSquare, Bell, Navigation, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -110,9 +109,21 @@ const EmergencyAccess = () => {
               />
               <Navigation className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             </div>
-            <div className="h-[400px] bg-gray-100 rounded-lg relative">
-              <div id="map" className="absolute inset-0 rounded-lg" />
-              {/* Map will be initialized here */}
+            <div className="h-[400px] bg-gray-100 rounded-lg relative flex items-center justify-center">
+              <div className="text-center">
+                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-600 mb-2">Interactive Hospital Map</h3>
+                <p className="text-gray-500 mb-4">
+                  Find nearby hospitals with real-time locations and information
+                </p>
+                <Button 
+                  onClick={() => window.location.href = '/nearby-hospitals'}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Find Nearby Hospitals
+                </Button>
+              </div>
             </div>
           </div>
         </div>

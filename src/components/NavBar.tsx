@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -46,6 +45,9 @@ const NavBar = () => {
             </Link>
             <Link to="/appointments">
               <Button variant="ghost">Appointments</Button>
+            </Link>
+            <Link to="/nearby-hospitals">
+              <Button variant="ghost">Nearby Hospitals</Button>
             </Link>
             
             {user ? (
