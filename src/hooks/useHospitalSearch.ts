@@ -77,7 +77,7 @@ export const useHospitalSearch = () => {
       if (hospitalsWithDistance.length === 0) {
         toast({
           title: "No Hospitals Found",
-          description: "No hospitals found in your area. This might be due to API configuration issues. Please check the console for more details.",
+          description: "No hospitals found in your area. Try expanding your search radius or adjusting your search terms.",
           variant: "destructive",
         });
       } else {
@@ -92,9 +92,11 @@ export const useHospitalSearch = () => {
       let errorMessage = "Failed to fetch nearby hospitals. ";
       if (error instanceof Error) {
         if (error.message.includes('API key')) {
-          errorMessage += "Google Maps API key may not be configured properly. Please check the configuration.";
-        } else if (error.message.includes('quota')) {
+          errorMessage += "Google Maps API key configuration issue. Please check your API settings.";
+        } else if (error.message.includes('quota') || error.message.includes('OVER_QUERY_LIMIT')) {
           errorMessage += "API quota exceeded. Please try again later.";
+        } else if (error.message.includes('REQUEST_DENIED')) {
+          errorMessage += "API access denied. Please check your Google Maps API key permissions.";
         } else {
           errorMessage += error.message;
         }
@@ -125,6 +127,10 @@ export const useHospitalSearch = () => {
             lng: results[0].geometry.location.lng()
           };
           callback(location);
+          toast({
+            title: "Location Found",
+            description: `Searching for hospitals near ${results[0].formatted_address}`,
+          });
         } else {
           console.error('Geocoding failed:', status);
           toast({

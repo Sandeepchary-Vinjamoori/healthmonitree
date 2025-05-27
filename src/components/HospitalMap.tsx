@@ -86,18 +86,18 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
     };
 
     if (!checkGoogleMaps()) {
-      // Try to load Google Maps if not available
+      // Load Google Maps script with the API key
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
       script.onload = () => {
         console.log('Google Maps script loaded');
-        loadGoogleMaps();
+        setTimeout(loadGoogleMaps, 100); // Small delay to ensure Google Maps is ready
       };
       script.onerror = (error) => {
         console.error('Failed to load Google Maps script:', error);
-        setMapError('Failed to load Google Maps. Please check your internet connection and API key.');
+        setMapError('Failed to load Google Maps. Please check your internet connection and API key configuration.');
       };
       document.head.appendChild(script);
     } else {

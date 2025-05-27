@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,9 +27,9 @@ serve(async (req) => {
     console.log('Using Google Maps API key:', googleMapsApiKey.substring(0, 10) + '...')
 
     // Call Google Places API
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=hospital&keyword=${keyword}&key=${googleMapsApiKey}`
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=hospital&keyword=${encodeURIComponent(keyword)}&key=${googleMapsApiKey}`
     
-    console.log('Making request to Google Places API:', url.replace(googleMapsApiKey, 'HIDDEN_KEY'))
+    console.log('Making request to Google Places API')
     
     const response = await fetch(url)
     const data = await response.json()
@@ -40,14 +39,21 @@ serve(async (req) => {
 
     if (data.status !== 'OK') {
       console.error('Google Places API error:', data.status, data.error_message)
-      throw new Error(`Google Places API error: ${data.status} - ${data.error_message || 'Unknown error'}`)
+      
+      if (data.status === 'REQUEST_DENIED') {
+        throw new Error('Google Places API access denied. Please check that your API key has Places API enabled and proper restrictions configured.')
+      } else if (data.status === 'OVER_QUERY_LIMIT') {
+        throw new Error('Google Places API quota exceeded. Please check your API limits or upgrade your plan.')
+      } else {
+        throw new Error(`Google Places API error: ${data.status} - ${data.error_message || 'Unknown error'}`)
+      }
     }
 
     // Get place details for each hospital
     const hospitalsWithDetails = await Promise.all(
-      data.results.slice(0, 10).map(async (place: any) => {
+      data.results.slice(0, 20).map(async (place: any) => {
         try {
-          const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,rating,user_ratings_total,opening_hours,website&key=${googleMapsApiKey}`
+          const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,rating,user_ratings_total,opening_hours,website,photos&key=${googleMapsApiKey}`
           const detailsResponse = await fetch(detailsUrl)
           const detailsData = await detailsResponse.json()
           
@@ -67,7 +73,7 @@ serve(async (req) => {
             phone: detailsData.result?.formatted_phone_number,
             website: detailsData.result?.website,
             opening_hours: detailsData.result?.opening_hours,
-            photos: place.photos?.slice(0, 1).map((photo: any) => 
+            photos: place.photos?.slice(0, 3).map((photo: any) => 
               `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${googleMapsApiKey}`
             ) || []
           }
@@ -109,7 +115,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: 'Please check that your Google Maps API key is properly configured and has the necessary permissions for Places API.'
+        details: 'Please check that your Google Maps API key is properly configured and has the necessary permissions for Places API and Maps JavaScript API.'
       }),
       { 
         status: 500,
