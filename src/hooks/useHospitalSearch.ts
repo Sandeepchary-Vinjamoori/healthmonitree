@@ -34,6 +34,8 @@ export const useHospitalSearch = () => {
 
   const searchNearbyHospitals = async (location: Location, keyword: string = '') => {
     setLoading(true);
+    console.log('Searching for hospitals:', { location, keyword });
+    
     try {
       const { data, error } = await supabase.functions.invoke('nearby-hospitals', {
         body: {
@@ -44,10 +46,20 @@ export const useHospitalSearch = () => {
         }
       });
 
-      if (error) throw error;
+      console.log('Hospital search response:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to fetch hospitals');
+      }
+
+      if (data.error) {
+        console.error('API error:', data.error);
+        throw new Error(data.error);
+      }
 
       // Enhanced hospital data processing with distance calculation
-      const hospitalsWithDistance = data.hospitals
+      const hospitalsWithDistance = (data.hospitals || [])
         .map((hospital: Hospital) => ({
           ...hospital,
           distance: calculateDistance(
@@ -65,24 +77,46 @@ export const useHospitalSearch = () => {
       if (hospitalsWithDistance.length === 0) {
         toast({
           title: "No Hospitals Found",
-          description: "No hospitals found in your area. Try expanding your search or check your location.",
+          description: "No hospitals found in your area. This might be due to API configuration issues. Please check the console for more details.",
           variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Hospitals Found",
+          description: `Found ${hospitalsWithDistance.length} hospital${hospitalsWithDistance.length !== 1 ? 's' : ''} near you.`,
         });
       }
     } catch (error) {
       console.error('Error fetching hospitals:', error);
+      
+      let errorMessage = "Failed to fetch nearby hospitals. ";
+      if (error instanceof Error) {
+        if (error.message.includes('API key')) {
+          errorMessage += "Google Maps API key may not be configured properly. Please check the configuration.";
+        } else if (error.message.includes('quota')) {
+          errorMessage += "API quota exceeded. Please try again later.";
+        } else {
+          errorMessage += error.message;
+        }
+      } else {
+        errorMessage += "Please check your connection and try again.";
+      }
+      
       toast({
         title: "Search Error",
-        description: "Failed to fetch nearby hospitals. Please check your connection and try again.",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Set empty array on error
+      setHospitals([]);
     } finally {
       setLoading(false);
     }
   };
 
   const searchByAddress = (address: string, callback: (location: Location) => void) => {
-    if (window.google) {
+    if (window.google && window.google.maps) {
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ address }, (results, status) => {
         if (status === 'OK' && results && results[0]) {
@@ -92,12 +126,19 @@ export const useHospitalSearch = () => {
           };
           callback(location);
         } else {
+          console.error('Geocoding failed:', status);
           toast({
             title: "Location Not Found",
             description: "Could not find the specified location. Please try a different search term.",
             variant: "destructive",
           });
         }
+      });
+    } else {
+      toast({
+        title: "Google Maps Not Available",
+        description: "Google Maps is not loaded. Please refresh the page and try again.",
+        variant: "destructive",
       });
     }
   };

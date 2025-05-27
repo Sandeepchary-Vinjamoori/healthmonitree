@@ -1,8 +1,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Navigation } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { MapPin, AlertTriangle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface Hospital {
   id: string;
@@ -39,41 +40,65 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const [userMarker, setUserMarker] = useState<google.maps.Marker | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+  const { toast } = useToast();
+
+  // Check if Google Maps is available
+  const checkGoogleMaps = () => {
+    return window.google && window.google.maps;
+  };
 
   // Initialize Google Maps
   useEffect(() => {
     const loadGoogleMaps = () => {
-      if (window.google && mapRef.current) {
-        const mapInstance = new google.maps.Map(mapRef.current, {
-          zoom: 13,
-          center: userLocation || { lat: 40.7128, lng: -74.0060 },
-          styles: [
-            {
-              featureType: 'poi.medical',
-              elementType: 'geometry',
-              stylers: [{ color: '#ffeaa7' }]
-            },
-            {
-              featureType: 'road',
-              elementType: 'geometry',
-              stylers: [{ color: '#f8f9fa' }]
-            }
-          ],
-          mapTypeControl: true,
-          streetViewControl: true,
-          fullscreenControl: true,
-          zoomControl: true
-        });
-        setMap(mapInstance);
+      if (checkGoogleMaps() && mapRef.current) {
+        try {
+          const mapInstance = new google.maps.Map(mapRef.current, {
+            zoom: 13,
+            center: userLocation || { lat: 40.7128, lng: -74.0060 },
+            styles: [
+              {
+                featureType: 'poi.medical',
+                elementType: 'geometry',
+                stylers: [{ color: '#ffeaa7' }]
+              },
+              {
+                featureType: 'road',
+                elementType: 'geometry',
+                stylers: [{ color: '#f8f9fa' }]
+              }
+            ],
+            mapTypeControl: true,
+            streetViewControl: true,
+            fullscreenControl: true,
+            zoomControl: true
+          });
+          setMap(mapInstance);
+          setMapsLoaded(true);
+          setMapError(null);
+          console.log('Google Maps loaded successfully');
+        } catch (error) {
+          console.error('Error initializing Google Maps:', error);
+          setMapError('Failed to initialize Google Maps. Please check the API key configuration.');
+        }
       }
     };
 
-    if (!window.google) {
+    if (!checkGoogleMaps()) {
+      // Try to load Google Maps if not available
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
-      script.onload = loadGoogleMaps;
+      script.onload = () => {
+        console.log('Google Maps script loaded');
+        loadGoogleMaps();
+      };
+      script.onerror = (error) => {
+        console.error('Failed to load Google Maps script:', error);
+        setMapError('Failed to load Google Maps. Please check your internet connection and API key.');
+      };
       document.head.appendChild(script);
     } else {
       loadGoogleMaps();
@@ -82,112 +107,121 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
 
   // Update map center when user location changes
   useEffect(() => {
-    if (map && userLocation) {
-      map.setCenter(userLocation);
-      
-      // Add or update user location marker
-      if (userMarker) {
-        userMarker.setMap(null);
-      }
-      
-      const newUserMarker = new google.maps.Marker({
-        position: userLocation,
-        map,
-        title: 'Your Location',
-        icon: {
-          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="8" fill="#2563eb" stroke="white" stroke-width="2"/>
-              <circle cx="12" cy="12" r="3" fill="white"/>
-            </svg>
-          `),
-          scaledSize: new google.maps.Size(24, 24)
+    if (map && userLocation && mapsLoaded) {
+      try {
+        map.setCenter(userLocation);
+        
+        // Add or update user location marker
+        if (userMarker) {
+          userMarker.setMap(null);
         }
-      });
-      
-      setUserMarker(newUserMarker);
+        
+        const newUserMarker = new google.maps.Marker({
+          position: userLocation,
+          map,
+          title: 'Your Location',
+          icon: {
+            url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="8" fill="#2563eb" stroke="white" stroke-width="2"/>
+                <circle cx="12" cy="12" r="3" fill="white"/>
+              </svg>
+            `),
+            scaledSize: new google.maps.Size(24, 24)
+          }
+        });
+        
+        setUserMarker(newUserMarker);
+      } catch (error) {
+        console.error('Error updating user location marker:', error);
+      }
     }
-  }, [map, userLocation]);
+  }, [map, userLocation, mapsLoaded]);
 
   // Update hospital markers
   useEffect(() => {
-    if (!map) return;
+    if (!map || !mapsLoaded) return;
 
-    // Clear existing markers
-    markers.forEach(marker => marker.setMap(null));
+    try {
+      // Clear existing markers
+      markers.forEach(marker => marker.setMap(null));
 
-    // Create new markers for hospitals
-    const newMarkers = hospitals.map(hospital => {
-      const marker = new google.maps.Marker({
-        position: hospital.location,
-        map,
-        title: hospital.name,
-        icon: {
-          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#dc2626"/>
-              <path d="M12 6v6m-3-3h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          `),
-          scaledSize: new google.maps.Size(32, 32)
-        }
-      });
-
-      // Add click listener
-      marker.addListener('click', () => {
-        onHospitalSelect(hospital);
-        
-        // Create detailed info window
-        const infoWindow = new google.maps.InfoWindow({
-          content: `
-            <div style="padding: 12px; max-width: 250px; font-family: system-ui;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #1f2937;">${hospital.name}</h3>
-              <p style="margin: 0 0 6px 0; font-size: 14px; color: #6b7280;">${hospital.formatted_address}</p>
-              ${hospital.rating ? `
-                <div style="margin: 6px 0; font-size: 14px;">
-                  <span style="color: #f59e0b;">⭐ ${hospital.rating}</span>
-                  ${hospital.user_ratings_total ? `<span style="color: #9ca3af;"> (${hospital.user_ratings_total} reviews)</span>` : ''}
-                </div>
-              ` : ''}
-              ${hospital.distance ? `
-                <p style="margin: 6px 0 0 0; font-size: 14px; color: #059669; font-weight: 500;">
-                  📍 ${hospital.distance.toFixed(1)} km away
-                </p>
-              ` : ''}
-              ${hospital.phone ? `
-                <div style="margin-top: 8px;">
-                  <a href="tel:${hospital.phone}" style="color: #2563eb; text-decoration: none; font-size: 14px;">
-                    📞 ${hospital.phone}
-                  </a>
-                </div>
-              ` : ''}
-            </div>
-          `
+      // Create new markers for hospitals
+      const newMarkers = hospitals.map(hospital => {
+        const marker = new google.maps.Marker({
+          position: hospital.location,
+          map,
+          title: hospital.name,
+          icon: {
+            url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#dc2626"/>
+                <path d="M12 6v6m-3-3h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            `),
+            scaledSize: new google.maps.Size(32, 32)
+          }
         });
-        infoWindow.open(map, marker);
+
+        // Add click listener
+        marker.addListener('click', () => {
+          onHospitalSelect(hospital);
+          
+          // Create detailed info window
+          const infoWindow = new google.maps.InfoWindow({
+            content: `
+              <div style="padding: 12px; max-width: 250px; font-family: system-ui;">
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #1f2937;">${hospital.name}</h3>
+                <p style="margin: 0 0 6px 0; font-size: 14px; color: #6b7280;">${hospital.formatted_address}</p>
+                ${hospital.rating ? `
+                  <div style="margin: 6px 0; font-size: 14px;">
+                    <span style="color: #f59e0b;">⭐ ${hospital.rating}</span>
+                    ${hospital.user_ratings_total ? `<span style="color: #9ca3af;"> (${hospital.user_ratings_total} reviews)</span>` : ''}
+                  </div>
+                ` : ''}
+                ${hospital.distance ? `
+                  <p style="margin: 6px 0 0 0; font-size: 14px; color: #059669; font-weight: 500;">
+                    📍 ${hospital.distance.toFixed(1)} km away
+                  </p>
+                ` : ''}
+                ${hospital.phone ? `
+                  <div style="margin-top: 8px;">
+                    <a href="tel:${hospital.phone}" style="color: #2563eb; text-decoration: none; font-size: 14px;">
+                      📞 ${hospital.phone}
+                    </a>
+                  </div>
+                ` : ''}
+              </div>
+            `
+          });
+          infoWindow.open(map, marker);
+        });
+
+        return marker;
       });
 
-      return marker;
-    });
+      setMarkers(newMarkers);
 
-    setMarkers(newMarkers);
-
-    // Fit map to show all markers
-    if (newMarkers.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
-      newMarkers.forEach(marker => bounds.extend(marker.getPosition()!));
-      if (userLocation) {
-        bounds.extend(new google.maps.LatLng(userLocation.lat, userLocation.lng));
+      // Fit map to show all markers
+      if (newMarkers.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        newMarkers.forEach(marker => bounds.extend(marker.getPosition()!));
+        if (userLocation) {
+          bounds.extend(new google.maps.LatLng(userLocation.lat, userLocation.lng));
+        }
+        map.fitBounds(bounds);
+        
+        // Ensure minimum zoom level
+        const listener = google.maps.event.addListener(map, "idle", function() {
+          if (map.getZoom()! > 15) map.setZoom(15);
+          google.maps.event.removeListener(listener);
+        });
       }
-      map.fitBounds(bounds);
-      
-      // Ensure minimum zoom level
-      const listener = google.maps.event.addListener(map, "idle", function() {
-        if (map.getZoom()! > 15) map.setZoom(15);
-        google.maps.event.removeListener(listener);
-      });
+    } catch (error) {
+      console.error('Error updating hospital markers:', error);
+      setMapError('Error displaying hospital markers on the map.');
     }
-  }, [map, hospitals, onHospitalSelect, userLocation]);
+  }, [map, hospitals, onHospitalSelect, userLocation, mapsLoaded]);
 
   if (loading) {
     return (
@@ -197,6 +231,24 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
           <p className="text-gray-600">Loading interactive map...</p>
         </div>
       </div>
+    );
+  }
+
+  if (mapError) {
+    return (
+      <Card className="h-full min-h-[400px] flex items-center justify-center">
+        <CardContent className="text-center p-8">
+          <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Map Loading Error</h3>
+          <p className="text-gray-600 mb-4">{mapError}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+          >
+            Reload Page
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 

@@ -31,6 +31,7 @@ interface NearbyHospitalsProps {
 const NearbyHospitals: React.FC<NearbyHospitalsProps> = ({ className }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
+  const [searchTriggered, setSearchTriggered] = useState(false);
   
   const { userLocation, setUserLocation, getCurrentLocation, loading: locationLoading } = useLocationManager();
   const { hospitals, loading: searchLoading, searchNearbyHospitals, searchByAddress } = useHospitalSearch();
@@ -39,20 +40,26 @@ const NearbyHospitals: React.FC<NearbyHospitalsProps> = ({ className }) => {
 
   // Handle search with geocoding or current location
   const handleSearch = () => {
+    setSearchTriggered(true);
     if (searchQuery.trim()) {
+      console.log('Searching by address:', searchQuery);
       searchByAddress(searchQuery, (location) => {
         setUserLocation(location);
         searchNearbyHospitals(location, 'hospital');
       });
     } else if (userLocation) {
+      console.log('Searching with current location:', userLocation);
       searchNearbyHospitals(userLocation);
     } else {
+      console.log('Getting current location for search');
       getCurrentLocation();
     }
   };
 
   // Handle current location button
   const handleCurrentLocation = () => {
+    setSearchTriggered(true);
+    setSearchQuery(''); // Clear search query when using current location
     getCurrentLocation();
   };
 
@@ -70,15 +77,18 @@ const NearbyHospitals: React.FC<NearbyHospitalsProps> = ({ className }) => {
     }
   };
 
-  // Search hospitals when location is obtained
+  // Search hospitals when location is obtained and search was triggered
   useEffect(() => {
-    if (userLocation) {
+    if (userLocation && searchTriggered) {
+      console.log('Location obtained, searching for hospitals:', userLocation);
       searchNearbyHospitals(userLocation);
+      setSearchTriggered(false);
     }
-  }, [userLocation]);
+  }, [userLocation, searchTriggered]);
 
-  // Initialize with user location on mount
+  // Auto-initialize with user location on mount
   useEffect(() => {
+    console.log('NearbyHospitals component mounted, getting current location');
     getCurrentLocation();
   }, []);
 
