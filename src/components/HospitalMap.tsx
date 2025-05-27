@@ -46,7 +46,7 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
 
   // Check if Google Maps is available
   const checkGoogleMaps = () => {
-    return window.google && window.google.maps;
+    return window.google && window.google.maps && window.google.maps.Map;
   };
 
   // Initialize Google Maps
@@ -77,11 +77,15 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
           setMap(mapInstance);
           setMapsLoaded(true);
           setMapError(null);
-          console.log('Google Maps loaded successfully');
+          console.log('Google Maps initialized successfully');
         } catch (error) {
           console.error('Error initializing Google Maps:', error);
           setMapError('Failed to initialize Google Maps. Please check the API key configuration.');
         }
+      } else {
+        console.log('Google Maps not ready yet, retrying...');
+        // Retry after a short delay
+        setTimeout(loadGoogleMaps, 500);
       }
     };
 
@@ -93,7 +97,15 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
       script.defer = true;
       script.onload = () => {
         console.log('Google Maps script loaded');
-        setTimeout(loadGoogleMaps, 100); // Small delay to ensure Google Maps is ready
+        // Wait for Google Maps to be fully available
+        const checkAndLoad = () => {
+          if (window.google && window.google.maps && window.google.maps.Map) {
+            loadGoogleMaps();
+          } else {
+            setTimeout(checkAndLoad, 100);
+          }
+        };
+        checkAndLoad();
       };
       script.onerror = (error) => {
         console.error('Failed to load Google Maps script:', error);

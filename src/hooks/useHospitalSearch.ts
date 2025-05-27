@@ -53,13 +53,13 @@ export const useHospitalSearch = () => {
         throw new Error(error.message || 'Failed to fetch hospitals');
       }
 
-      if (data.error) {
+      if (data?.error) {
         console.error('API error:', data.error);
         throw new Error(data.error);
       }
 
       // Enhanced hospital data processing with distance calculation
-      const hospitalsWithDistance = (data.hospitals || [])
+      const hospitalsWithDistance = (data?.hospitals || [])
         .map((hospital: Hospital) => ({
           ...hospital,
           distance: calculateDistance(
@@ -95,8 +95,8 @@ export const useHospitalSearch = () => {
           errorMessage += "Google Maps API key configuration issue. Please check your API settings.";
         } else if (error.message.includes('quota') || error.message.includes('OVER_QUERY_LIMIT')) {
           errorMessage += "API quota exceeded. Please try again later.";
-        } else if (error.message.includes('REQUEST_DENIED')) {
-          errorMessage += "API access denied. Please check your Google Maps API key permissions.";
+        } else if (error.message.includes('REQUEST_DENIED') || error.message.includes('access denied')) {
+          errorMessage += "API access denied. Please check that your Google Maps API key has Places API (New) enabled.";
         } else {
           errorMessage += error.message;
         }

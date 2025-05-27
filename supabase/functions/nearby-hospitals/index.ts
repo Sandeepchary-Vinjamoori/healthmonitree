@@ -26,78 +26,82 @@ serve(async (req) => {
 
     console.log('Using Google Maps API key:', googleMapsApiKey.substring(0, 10) + '...')
 
-    // Call Google Places API
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=hospital&keyword=${encodeURIComponent(keyword)}&key=${googleMapsApiKey}`
+    // Use the new Places API (New) instead of legacy API
+    const url = `https://places.googleapis.com/v1/places:searchNearby`
     
-    console.log('Making request to Google Places API')
+    console.log('Making request to Google Places API (New)')
     
-    const response = await fetch(url)
-    const data = await response.json()
-
-    console.log('Google Places API response status:', data.status)
-    console.log('Google Places API results count:', data.results?.length || 0)
-
-    if (data.status !== 'OK') {
-      console.error('Google Places API error:', data.status, data.error_message)
-      
-      if (data.status === 'REQUEST_DENIED') {
-        throw new Error('Google Places API access denied. Please check that your API key has Places API enabled and proper restrictions configured.')
-      } else if (data.status === 'OVER_QUERY_LIMIT') {
-        throw new Error('Google Places API quota exceeded. Please check your API limits or upgrade your plan.')
-      } else {
-        throw new Error(`Google Places API error: ${data.status} - ${data.error_message || 'Unknown error'}`)
+    const requestBody = {
+      includedTypes: ['hospital'],
+      maxResultCount: 20,
+      locationRestriction: {
+        circle: {
+          center: {
+            latitude: lat,
+            longitude: lng
+          },
+          radius: radius
+        }
       }
     }
 
-    // Get place details for each hospital
-    const hospitalsWithDetails = await Promise.all(
-      data.results.slice(0, 20).map(async (place: any) => {
-        try {
-          const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,rating,user_ratings_total,opening_hours,website,photos&key=${googleMapsApiKey}`
-          const detailsResponse = await fetch(detailsUrl)
-          const detailsData = await detailsResponse.json()
-          
-          console.log(`Details for ${place.name}:`, detailsData.status)
-          
-          return {
-            id: place.place_id,
-            name: place.name,
-            address: place.vicinity,
-            formatted_address: detailsData.result?.formatted_address || place.vicinity,
-            location: {
-              lat: place.geometry.location.lat,
-              lng: place.geometry.location.lng
-            },
-            rating: place.rating,
-            user_ratings_total: place.user_ratings_total,
-            phone: detailsData.result?.formatted_phone_number,
-            website: detailsData.result?.website,
-            opening_hours: detailsData.result?.opening_hours,
-            photos: place.photos?.slice(0, 3).map((photo: any) => 
-              `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${googleMapsApiKey}`
-            ) || []
-          }
-        } catch (error) {
-          console.error(`Error getting details for ${place.name}:`, error)
-          return {
-            id: place.place_id,
-            name: place.name,
-            address: place.vicinity,
-            formatted_address: place.vicinity,
-            location: {
-              lat: place.geometry.location.lat,
-              lng: place.geometry.location.lng
-            },
-            rating: place.rating,
-            user_ratings_total: place.user_ratings_total,
-            phone: null,
-            website: null,
-            opening_hours: null,
-            photos: []
-          }
-        }
-      })
-    )
+    if (keyword && keyword !== 'hospital') {
+      requestBody.textQuery = keyword
+    }
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': googleMapsApiKey,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.nationalPhoneNumber,places.websiteUri,places.regularOpeningHours,places.photos'
+      },
+      body: JSON.stringify(requestBody)
+    })
+
+    const data = await response.json()
+
+    console.log('Google Places API response status:', response.status)
+    console.log('Google Places API results count:', data.places?.length || 0)
+
+    if (!response.ok) {
+      console.error('Google Places API error:', response.status, data)
+      
+      if (response.status === 403) {
+        throw new Error('Google Places API access denied. Please check that your API key has Places API (New) enabled and proper restrictions configured.')
+      } else if (response.status === 429) {
+        throw new Error('Google Places API quota exceeded. Please check your API limits or upgrade your plan.')
+      } else {
+        throw new Error(`Google Places API error: ${response.status} - ${data.error?.message || 'Unknown error'}`)
+      }
+    }
+
+    // Transform the new API response to match our expected format
+    const hospitalsWithDetails = (data.places || []).map((place: any) => {
+      const photos = place.photos?.slice(0, 3).map((photo: any) => 
+        `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=400&key=${googleMapsApiKey}`
+      ) || []
+
+      return {
+        id: place.id,
+        name: place.displayName?.text || 'Unknown Hospital',
+        address: place.formattedAddress || 'Address not available',
+        formatted_address: place.formattedAddress || 'Address not available',
+        location: {
+          lat: place.location?.latitude || 0,
+          lng: place.location?.longitude || 0
+        },
+        rating: place.rating,
+        user_ratings_total: place.userRatingCount,
+        phone: place.nationalPhoneNumber,
+        website: place.websiteUri,
+        opening_hours: place.regularOpeningHours ? {
+          open_now: place.regularOpeningHours.openNow || false,
+          periods: place.regularOpeningHours.periods || []
+        } : null,
+        photos: photos
+      }
+    })
 
     console.log('Returning hospitals:', hospitalsWithDetails.length)
 
@@ -115,7 +119,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: 'Please check that your Google Maps API key is properly configured and has the necessary permissions for Places API and Maps JavaScript API.'
+        details: 'Please check that your Google Maps API key is properly configured and has the necessary permissions for Places API (New).'
       }),
       { 
         status: 500,
