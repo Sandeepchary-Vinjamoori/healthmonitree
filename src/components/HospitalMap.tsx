@@ -1,7 +1,7 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useGoogleMapsKey } from '@/hooks/useGoogleMapsKey';
 import { MapPin, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -42,80 +42,82 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
   const [userMarker, setUserMarker] = useState<google.maps.Marker | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapsLoaded, setMapsLoaded] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const { toast } = useToast();
+  
+  const { apiKey, loading: keyLoading, error: keyError } = useGoogleMapsKey();
 
-  // Check if Google Maps is available
-  const checkGoogleMaps = () => {
-    return window.google && window.google.maps && window.google.maps.Map;
-  };
-
-  // Initialize Google Maps
+  // Load Google Maps script with API key
   useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (checkGoogleMaps() && mapRef.current) {
-        try {
-          const mapInstance = new google.maps.Map(mapRef.current, {
-            zoom: 13,
-            center: userLocation || { lat: 40.7128, lng: -74.0060 },
-            styles: [
-              {
-                featureType: 'poi.medical',
-                elementType: 'geometry',
-                stylers: [{ color: '#ffeaa7' }]
-              },
-              {
-                featureType: 'road',
-                elementType: 'geometry',
-                stylers: [{ color: '#f8f9fa' }]
-              }
-            ],
-            mapTypeControl: true,
-            streetViewControl: true,
-            fullscreenControl: true,
-            zoomControl: true
-          });
-          setMap(mapInstance);
-          setMapsLoaded(true);
-          setMapError(null);
-          console.log('Google Maps initialized successfully');
-        } catch (error) {
-          console.error('Error initializing Google Maps:', error);
-          setMapError('Failed to initialize Google Maps. Please check the API key configuration.');
-        }
-      } else {
-        console.log('Google Maps not ready yet, retrying...');
-        // Retry after a short delay
-        setTimeout(loadGoogleMaps, 500);
-      }
-    };
+    if (!apiKey || scriptLoaded) return;
 
-    if (!checkGoogleMaps()) {
-      // Load Google Maps script with the API key
+    const loadGoogleMaps = () => {
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&libraries=places&loading=async`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
+      
       script.onload = () => {
-        console.log('Google Maps script loaded');
-        // Wait for Google Maps to be fully available
-        const checkAndLoad = () => {
-          if (window.google && window.google.maps && window.google.maps.Map) {
-            loadGoogleMaps();
-          } else {
-            setTimeout(checkAndLoad, 100);
-          }
-        };
-        checkAndLoad();
+        console.log('Google Maps script loaded successfully');
+        setScriptLoaded(true);
+        initializeMap();
       };
+      
       script.onerror = (error) => {
         console.error('Failed to load Google Maps script:', error);
-        setMapError('Failed to load Google Maps. Please check your internet connection and API key configuration.');
+        setMapError('Failed to load Google Maps. Please check your API key configuration.');
       };
+      
       document.head.appendChild(script);
-    } else {
-      loadGoogleMaps();
+    };
+
+    loadGoogleMaps();
+  }, [apiKey]);
+
+  const initializeMap = () => {
+    if (!window.google || !window.google.maps || !mapRef.current) {
+      console.log('Google Maps not ready, retrying...');
+      setTimeout(initializeMap, 500);
+      return;
     }
-  }, []);
+
+    try {
+      const mapInstance = new google.maps.Map(mapRef.current, {
+        zoom: 13,
+        center: userLocation || { lat: 40.7128, lng: -74.0060 },
+        styles: [
+          {
+            featureType: 'poi.medical',
+            elementType: 'geometry',
+            stylers: [{ color: '#ffeaa7' }]
+          },
+          {
+            featureType: 'road',
+            elementType: 'geometry',
+            stylers: [{ color: '#f8f9fa' }]
+          }
+        ],
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        zoomControl: true
+      });
+      
+      setMap(mapInstance);
+      setMapsLoaded(true);
+      setMapError(null);
+      console.log('Google Maps initialized successfully');
+    } catch (error) {
+      console.error('Error initializing Google Maps:', error);
+      setMapError('Failed to initialize Google Maps. Please check the API key configuration.');
+    }
+  };
 
   // Update map center when user location changes
   useEffect(() => {
@@ -235,24 +237,29 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
     }
   }, [map, hospitals, onHospitalSelect, userLocation, mapsLoaded]);
 
-  if (loading) {
+  if (loading || keyLoading) {
     return (
       <div className="relative h-full min-h-[400px] bg-gray-100 rounded-lg">
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading interactive map...</p>
+          <p className="text-gray-600">
+            {keyLoading ? 'Loading map configuration...' : 'Loading interactive map...'}
+          </p>
         </div>
       </div>
     );
   }
 
-  if (mapError) {
+  if (keyError || mapError) {
     return (
       <Card className="h-full min-h-[400px] flex items-center justify-center">
         <CardContent className="text-center p-8">
           <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Map Loading Error</h3>
-          <p className="text-gray-600 mb-4">{mapError}</p>
+          <h3 className="text-lg font-semibold mb-2">Map Configuration Error</h3>
+          <p className="text-gray-600 mb-4">{keyError || mapError}</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Please ensure your Google Maps API key is properly configured in Supabase secrets and has the necessary APIs enabled.
+          </p>
           <Button 
             onClick={() => window.location.reload()} 
             variant="outline"
