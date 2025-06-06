@@ -12,45 +12,33 @@ import MedicationHistory from './MedicationHistory';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
-interface Medication {
-  id: string;
-  name: string;
-  dosage: string;
-  time: string;
-  frequency: string;
-}
-
 const MedicationTracker = () => {
-  const [medications, setMedications] = useState<Medication[]>([]);
   const [newMedication, setNewMedication] = useState({
     name: '',
     dosage: '',
-    time: '',
-    frequency: ''
+    times: [''],
+    frequency: 'daily' as 'daily' | 'alternate' | 'weekly',
+    reminderEnabled: true,
+    startDate: new Date(),
+    endDate: undefined as Date | undefined
   });
   const [showHistory, setShowHistory] = useState<string | null>(null);
-  const [reminderSchedule, setReminderSchedule] = useState('daily');
   const { toast } = useToast();
 
   const {
-    reminders,
+    medications,
+    reminderLogs,
     activeReminders,
-    addReminder,
-    toggleReminder,
-    snoozeReminder,
+    addMedication,
+    removeMedication,
+    updateMedication,
     markAsTaken,
-    getReminderLogs,
-    getAdherenceRate,
-    requestNotificationPermission,
+    snoozeReminder,
+    getAdherenceRate
   } = useMedicationReminders();
 
-  // Request notification permission on component mount
-  useEffect(() => {
-    requestNotificationPermission();
-  }, [requestNotificationPermission]);
-
   const handleAddMedication = () => {
-    if (!newMedication.name || !newMedication.dosage || !newMedication.time || !newMedication.frequency) {
+    if (!newMedication.name || !newMedication.dosage || !newMedication.times[0]) {
       toast({
         title: "Missing Information",
         description: "Please fill in all fields",
@@ -59,17 +47,25 @@ const MedicationTracker = () => {
       return;
     }
 
-    const medication: Medication = {
-      id: Math.random().toString(36).substring(7),
-      ...newMedication
-    };
-
-    setMedications([...medications, medication]);
+    addMedication({
+      name: newMedication.name,
+      dosage: newMedication.dosage,
+      times: newMedication.times.filter(time => time.trim() !== ''),
+      frequency: newMedication.frequency,
+      reminderEnabled: newMedication.reminderEnabled,
+      startDate: newMedication.startDate,
+      endDate: newMedication.endDate
+    });
     
-    // Add reminder for this medication
-    addReminder(medication.id, medication.time, reminderSchedule);
-    
-    setNewMedication({ name: '', dosage: '', time: '', frequency: '' });
+    setNewMedication({
+      name: '',
+      dosage: '',
+      times: [''],
+      frequency: 'daily',
+      reminderEnabled: true,
+      startDate: new Date(),
+      endDate: undefined
+    });
     
     toast({
       title: "Medication Added",
@@ -78,40 +74,52 @@ const MedicationTracker = () => {
   };
 
   const handleDelete = (id: string) => {
-    setMedications(medications.filter(med => med.id !== id));
+    removeMedication(id);
     toast({
       title: "Medication Removed",
       description: "The medication has been removed from your schedule"
     });
   };
 
-  const getMedicationReminder = (medicationId: string) => {
-    return reminders.find(reminder => reminder.medicationId === medicationId);
+  const addTimeSlot = () => {
+    setNewMedication(prev => ({
+      ...prev,
+      times: [...prev.times, '']
+    }));
   };
 
-  const getMedicationByName = (medicationId: string) => {
-    return medications.find(med => med.id === medicationId);
+  const removeTimeSlot = (index: number) => {
+    setNewMedication(prev => ({
+      ...prev,
+      times: prev.times.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateTimeSlot = (index: number, value: string) => {
+    setNewMedication(prev => ({
+      ...prev,
+      times: prev.times.map((time, i) => i === index ? value : time)
+    }));
+  };
+
+  const getMedicationReminderLogs = (medicationId: string) => {
+    return reminderLogs.filter(log => log.medicationId === medicationId);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Active Reminder Alerts */}
-      {activeReminders.map(medicationId => {
-        const medication = getMedicationByName(medicationId);
-        if (!medication) return null;
-        
-        return (
-          <ReminderAlert
-            key={medicationId}
-            medicationName={medication.name}
-            dosage={medication.dosage}
-            time={medication.time}
-            onTaken={() => markAsTaken(medicationId)}
-            onSnooze={(minutes) => snoozeReminder(medicationId, minutes)}
-            onDismiss={() => snoozeReminder(medicationId, 60)}
-          />
-        );
-      })}
+      {activeReminders.map(reminder => (
+        <ReminderAlert
+          key={reminder.id}
+          medicationName={reminder.medication.name}
+          dosage={reminder.medication.dosage}
+          time={reminder.scheduledTime.toTimeString().slice(0, 5)}
+          onTaken={() => markAsTaken(reminder.id)}
+          onSnooze={(minutes) => snoozeReminder(reminder.id, minutes)}
+          onDismiss={() => snoozeReminder(reminder.id, 60)}
+        />
+      ))}
 
       <Card className="mb-8">
         <CardHeader>
@@ -142,37 +150,54 @@ const MedicationTracker = () => {
                 placeholder="e.g., 1 pill, 5ml"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Time</label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                <Input
-                  className="pl-10"
-                  type="time"
-                  value={newMedication.time}
-                  onChange={(e) => setNewMedication({ ...newMedication, time: e.target.value })}
-                />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Times</label>
+            {newMedication.times.map((time, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="relative flex-1">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    className="pl-10"
+                    type="time"
+                    value={time}
+                    onChange={(e) => updateTimeSlot(index, e.target.value)}
+                  />
+                </div>
+                {newMedication.times.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => removeTimeSlot(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Frequency</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                <Input
-                  className="pl-10"
-                  value={newMedication.frequency}
-                  onChange={(e) => setNewMedication({ ...newMedication, frequency: e.target.value })}
-                  placeholder="e.g., Daily, Twice a day"
-                />
-              </div>
-            </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addTimeSlot}
+              className="w-full"
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Add Another Time
+            </Button>
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">Reminder Schedule</label>
-            <Select value={reminderSchedule} onValueChange={setReminderSchedule}>
+            <label className="text-sm font-medium">Frequency</label>
+            <Select 
+              value={newMedication.frequency} 
+              onValueChange={(value: 'daily' | 'alternate' | 'weekly') => 
+                setNewMedication({ ...newMedication, frequency: value })
+              }
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Select reminder schedule" />
+                <SelectValue placeholder="Select frequency" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="daily">Daily</SelectItem>
@@ -180,6 +205,16 @@ const MedicationTracker = () => {
                 <SelectItem value="weekly">Weekly</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Enable Reminders</label>
+            <Switch
+              checked={newMedication.reminderEnabled}
+              onCheckedChange={(checked) => 
+                setNewMedication({ ...newMedication, reminderEnabled: checked })
+              }
+            />
           </div>
           
           <Button onClick={handleAddMedication} className="w-full">
@@ -191,8 +226,8 @@ const MedicationTracker = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {medications.map((medication) => {
-          const reminder = getMedicationReminder(medication.id);
           const adherenceRate = getAdherenceRate(medication.id);
+          const logs = getMedicationReminderLogs(medication.id);
           
           return (
             <motion.div
@@ -220,54 +255,54 @@ const MedicationTracker = () => {
                   <div className="space-y-2 text-sm mb-4">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-gray-500" />
-                      <span>{medication.time}</span>
+                      <span>{medication.times.join(', ')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-500" />
-                      <span>{medication.frequency}</span>
+                      <span className="capitalize">{medication.frequency}</span>
                     </div>
                   </div>
                   
-                  {reminder && (
-                    <div className="space-y-3 border-t pt-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Reminders</span>
-                        <div className="flex items-center gap-2">
-                          {reminder.isEnabled ? (
-                            <Bell className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <BellOff className="h-4 w-4 text-gray-400" />
-                          )}
-                          <Switch
-                            checked={reminder.isEnabled}
-                            onCheckedChange={() => toggleReminder(reminder.id)}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500">
-                          Adherence: {adherenceRate.toFixed(1)}%
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowHistory(showHistory === medication.id ? null : medication.id)}
-                          className="h-6 px-2"
-                        >
-                          <History className="h-3 w-3 mr-1" />
-                          History
-                        </Button>
+                  <div className="space-y-3 border-t pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Reminders</span>
+                      <div className="flex items-center gap-2">
+                        {medication.reminderEnabled ? (
+                          <Bell className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <BellOff className="h-4 w-4 text-gray-400" />
+                        )}
+                        <Switch
+                          checked={medication.reminderEnabled}
+                          onCheckedChange={(checked) => 
+                            updateMedication(medication.id, { reminderEnabled: checked })
+                          }
+                        />
                       </div>
                     </div>
-                  )}
+                    
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">
+                        Adherence: {adherenceRate}%
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowHistory(showHistory === medication.id ? null : medication.id)}
+                        className="h-6 px-2"
+                      >
+                        <History className="h-3 w-3 mr-1" />
+                        History
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
               
               {showHistory === medication.id && (
                 <div className="mt-4">
                   <MedicationHistory
-                    logs={getReminderLogs(medication.id)}
+                    logs={logs}
                     adherenceRate={adherenceRate}
                     medicationName={medication.name}
                   />
