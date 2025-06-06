@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -10,16 +9,19 @@ const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // If user is already logged in, redirect to dashboard
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
   const handleLogin = () => {
     navigate('/auth?mode=login');
   };
 
   const handleSignUp = () => {
     navigate('/auth?mode=signup');
-  };
-
-  const handleDashboard = () => {
-    navigate('/dashboard');
   };
 
   return (
@@ -125,7 +127,7 @@ const HomePage = () => {
             >
               {user ? (
                 <Button
-                  onClick={handleDashboard}
+                  onClick={() => navigate('/dashboard')}
                   size="lg"
                   className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >

@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import Index from './pages/Index';
+import HomePage from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import HealthDataEntry from './pages/HealthDataEntry';
@@ -14,19 +14,29 @@ import NavBar from './components/NavBar';
 import EmergencyAccess from './components/EmergencyAccess';
 import ApiKeyManager from './components/ApiKeyManager';
 import NearbyHospitalsPage from './pages/NearbyHospitalsPage';
+import Index from './pages/Index';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <NavBar />
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <NavBar />
+                <Index />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/health-data" 
             element={
               <ProtectedRoute>
+                <NavBar />
                 <HealthDataEntry />
               </ProtectedRoute>
             } 
@@ -35,6 +45,7 @@ function App() {
             path="/patient-records" 
             element={
               <ProtectedRoute>
+                <NavBar />
                 <PatientRecords />
               </ProtectedRoute>
             } 
@@ -43,6 +54,7 @@ function App() {
             path="/medications" 
             element={
               <ProtectedRoute>
+                <NavBar />
                 <MedicationTracker />
               </ProtectedRoute>
             } 
@@ -51,6 +63,7 @@ function App() {
             path="/appointments" 
             element={
               <ProtectedRoute>
+                <NavBar />
                 <AppointmentScheduler />
               </ProtectedRoute>
             } 
@@ -59,6 +72,7 @@ function App() {
             path="/nearby-hospitals" 
             element={
               <ProtectedRoute>
+                <NavBar />
                 <NearbyHospitalsPage />
               </ProtectedRoute>
             } 

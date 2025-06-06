@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,12 +28,12 @@ const NavBar = () => {
     <nav className="fixed w-full bg-white/80 backdrop-blur-md z-50 border-b">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
+          <Link to="/dashboard" className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-primary">HealthMoniTree</span>
           </Link>
           <div className="flex items-center space-x-4">
-            <Link to="/">
-              <Button variant="ghost">Home</Button>
+            <Link to="/dashboard">
+              <Button variant="ghost">Dashboard</Button>
             </Link>
             <Link to="/health-data">
               <Button variant="ghost">Health Data</Button>

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -67,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Welcome to HealthMoniTree!",
       });
 
-      // Redirect to dashboard or intended page
+      // Redirect to dashboard after successful signup
       const returnTo = new URLSearchParams(location.search).get('returnTo');
       navigate(returnTo || '/dashboard');
     } catch (error: any) {
@@ -97,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Welcome back to HealthMoniTree!",
       });
 
-      // Redirect to dashboard or intended page
+      // Redirect to dashboard after successful login
       const returnTo = new URLSearchParams(location.search).get('returnTo');
       navigate(returnTo || '/dashboard');
     } catch (error: any) {
