@@ -2,30 +2,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
-export interface MedicationReminder {
+export interface Medication {
   id: string;
-  medicationId: string;
-  reminderTime: string;
-  isEnabled: boolean;
-  repeatSchedule: 'daily' | 'alternate' | 'weekly' | 'custom';
-  customDays?: number[]; // 0-6 for Sunday-Saturday
-  lastTriggered?: Date;
-  snoozedUntil?: Date;
+  name: string;
+  dosage: string;
+  times: string[];
+  frequency: 'daily' | 'alternate' | 'weekly';
+  reminderEnabled: boolean;
+  startDate: Date;
+  endDate?: Date;
 }
 
 export interface ReminderLog {
   id: string;
   medicationId: string;
+  medicationName: string;
   scheduledTime: Date;
   actualTime?: Date;
   status: 'taken' | 'missed' | 'snoozed';
   notes?: string;
 }
 
+export interface ActiveReminder {
+  id: string;
+  medication: Medication;
+  scheduledTime: Date;
+  isActive: boolean;
+}
+
 export const useMedicationReminders = () => {
-  const [reminders, setReminders] = useState<MedicationReminder[]>([]);
+  const [medications, setMedications] = useState<Medication[]>([]);
   const [reminderLogs, setReminderLogs] = useState<ReminderLog[]>([]);
-  const [activeReminders, setActiveReminders] = useState<string[]>([]);
+  const [activeReminders, setActiveReminders] = useState<ActiveReminder[]>([]);
   const { toast } = useToast();
 
   // Request notification permission
@@ -37,147 +45,282 @@ export const useMedicationReminders = () => {
     return false;
   }, []);
 
-  // Add reminder for medication
-  const addReminder = useCallback((medicationId: string, time: string, schedule: string) => {
-    const reminder: MedicationReminder = {
-      id: Math.random().toString(36).substring(7),
-      medicationId,
-      reminderTime: time,
-      isEnabled: true,
-      repeatSchedule: schedule as any,
-    };
-    
-    setReminders(prev => [...prev, reminder]);
-    toast({
-      title: "Reminder Set",
-      description: "Your medication reminder has been activated",
-    });
-  }, [toast]);
-
-  // Toggle reminder on/off
-  const toggleReminder = useCallback((reminderId: string) => {
-    setReminders(prev => prev.map(reminder => 
-      reminder.id === reminderId 
-        ? { ...reminder, isEnabled: !reminder.isEnabled }
-        : reminder
-    ));
-  }, []);
-
-  // Snooze reminder
-  const snoozeReminder = useCallback((medicationId: string, minutes: number) => {
-    const snoozeUntil = new Date(Date.now() + minutes * 60000);
-    setReminders(prev => prev.map(reminder => 
-      reminder.medicationId === medicationId 
-        ? { ...reminder, snoozedUntil: snoozeUntil }
-        : reminder
-    ));
-    
-    setActiveReminders(prev => prev.filter(id => id !== medicationId));
-    
-    toast({
-      title: "Reminder Snoozed",
-      description: `Reminder snoozed for ${minutes} minutes`,
-    });
-  }, [toast]);
-
-  // Mark medication as taken
-  const markAsTaken = useCallback((medicationId: string, notes?: string) => {
-    const log: ReminderLog = {
-      id: Math.random().toString(36).substring(7),
-      medicationId,
-      scheduledTime: new Date(),
-      actualTime: new Date(),
-      status: 'taken',
-      notes,
-    };
-    
-    setReminderLogs(prev => [...prev, log]);
-    setActiveReminders(prev => prev.filter(id => id !== medicationId));
-    
-    toast({
-      title: "Medication Taken",
-      description: "Great job! Medication marked as taken",
-    });
-  }, [toast]);
-
   // Show notification
-  const showNotification = useCallback((title: string, body: string, medicationId: string) => {
+  const showNotification = useCallback((medication: Medication, time: string) => {
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification(title, {
-        body,
+      const notification = new Notification(`Time for ${medication.name}`, {
+        body: `Take ${medication.dosage} now`,
         icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        requireInteraction: true,
-        actions: [
-          { action: 'taken', title: 'Mark as Taken' },
-          { action: 'snooze', title: 'Snooze 10 min' }
-        ]
+        tag: `med-${medication.id}-${time}`,
+        requireInteraction: true
       });
 
       notification.onclick = () => {
         window.focus();
         notification.close();
       };
+
+      // Auto-close notification after 30 seconds
+      setTimeout(() => {
+        notification.close();
+      }, 30000);
     }
   }, []);
 
-  // Check for due reminders
-  const checkReminders = useCallback(() => {
-    const now = new Date();
-    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
-                       now.getMinutes().toString().padStart(2, '0');
+  // Calculate next reminder time
+  const getNextReminderTime = useCallback((medication: Medication, currentTime: Date = new Date()): Date | null => {
+    if (!medication.reminderEnabled) return null;
 
-    reminders.forEach(reminder => {
-      if (!reminder.isEnabled) return;
-      if (reminder.snoozedUntil && now < reminder.snoozedUntil) return;
-      if (activeReminders.includes(reminder.medicationId)) return;
+    const today = new Date(currentTime);
+    const startDate = new Date(medication.startDate);
+    
+    // Check if medication period has ended
+    if (medication.endDate && today > medication.endDate) {
+      return null;
+    }
 
-      const shouldTrigger = reminder.reminderTime === currentTime;
-      
-      if (shouldTrigger) {
-        setActiveReminders(prev => [...prev, reminder.medicationId]);
-        showNotification(
-          'Medication Reminder',
-          `Time to take your medication`,
-          reminder.medicationId
-        );
+    // Calculate days since start
+    const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Check frequency
+    let shouldTakeToday = false;
+    switch (medication.frequency) {
+      case 'daily':
+        shouldTakeToday = daysSinceStart >= 0;
+        break;
+      case 'alternate':
+        shouldTakeToday = daysSinceStart >= 0 && daysSinceStart % 2 === 0;
+        break;
+      case 'weekly':
+        shouldTakeToday = daysSinceStart >= 0 && daysSinceStart % 7 === 0;
+        break;
+    }
+
+    if (!shouldTakeToday) {
+      // Calculate next valid day
+      let nextValidDay = new Date(today);
+      switch (medication.frequency) {
+        case 'daily':
+          nextValidDay.setDate(nextValidDay.getDate() + 1);
+          break;
+        case 'alternate':
+          const daysToAdd = daysSinceStart % 2 === 0 ? 2 : 1;
+          nextValidDay.setDate(nextValidDay.getDate() + daysToAdd);
+          break;
+        case 'weekly':
+          const daysToAddWeekly = 7 - (daysSinceStart % 7);
+          nextValidDay.setDate(nextValidDay.getDate() + daysToAddWeekly);
+          break;
       }
+      
+      // Set to first time of next valid day
+      const [hours, minutes] = medication.times[0].split(':').map(Number);
+      nextValidDay.setHours(hours, minutes, 0, 0);
+      return nextValidDay;
+    }
+
+    // Find next time today
+    const now = new Date();
+    for (const timeStr of medication.times) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const reminderTime = new Date(today);
+      reminderTime.setHours(hours, minutes, 0, 0);
+
+      if (reminderTime > now) {
+        return reminderTime;
+      }
+    }
+
+    // No more times today, calculate next day
+    let nextDay = new Date(today);
+    switch (medication.frequency) {
+      case 'daily':
+        nextDay.setDate(nextDay.getDate() + 1);
+        break;
+      case 'alternate':
+        nextDay.setDate(nextDay.getDate() + 2);
+        break;
+      case 'weekly':
+        nextDay.setDate(nextDay.getDate() + 7);
+        break;
+    }
+
+    const [hours, minutes] = medication.times[0].split(':').map(Number);
+    nextDay.setHours(hours, minutes, 0, 0);
+    return nextDay;
+  }, []);
+
+  // Schedule reminders
+  const scheduleReminders = useCallback(() => {
+    // Clear existing timeouts (in a real app, you'd store these)
+    
+    medications.forEach(medication => {
+      if (!medication.reminderEnabled) return;
+
+      medication.times.forEach(time => {
+        const nextReminder = getNextReminderTime(medication);
+        if (!nextReminder) return;
+
+        const timeUntilReminder = nextReminder.getTime() - Date.now();
+        
+        if (timeUntilReminder > 0) {
+          setTimeout(() => {
+            showNotification(medication, time);
+            
+            // Create active reminder
+            const reminder: ActiveReminder = {
+              id: `${medication.id}-${time}-${Date.now()}`,
+              medication,
+              scheduledTime: nextReminder,
+              isActive: true
+            };
+            
+            setActiveReminders(prev => [...prev, reminder]);
+            
+            // Log as scheduled
+            const log: ReminderLog = {
+              id: `log-${Date.now()}`,
+              medicationId: medication.id,
+              medicationName: medication.name,
+              scheduledTime: nextReminder,
+              status: 'missed' // Will be updated when user responds
+            };
+            
+            setReminderLogs(prev => [...prev, log]);
+          }, timeUntilReminder);
+        }
+      });
     });
-  }, [reminders, activeReminders, showNotification]);
+  }, [medications, getNextReminderTime, showNotification]);
 
-  // Set up interval to check reminders
-  useEffect(() => {
-    const interval = setInterval(checkReminders, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, [checkReminders]);
-
-  // Get reminder logs for a medication
-  const getReminderLogs = useCallback((medicationId: string) => {
-    return reminderLogs.filter(log => log.medicationId === medicationId);
-  }, [reminderLogs]);
-
-  // Get adherence rate for a medication
-  const getAdherenceRate = useCallback((medicationId: string, days: number = 7) => {
-    const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const logs = reminderLogs.filter(log => 
-      log.medicationId === medicationId && 
-      log.scheduledTime >= cutoffDate
+  // Mark medication as taken
+  const markAsTaken = useCallback((reminderId: string, notes?: string) => {
+    setActiveReminders(prev => 
+      prev.map(reminder => 
+        reminder.id === reminderId 
+          ? { ...reminder, isActive: false }
+          : reminder
+      )
     );
+
+    setReminderLogs(prev => 
+      prev.map(log => 
+        log.id.includes(reminderId.split('-')[0])
+          ? { ...log, status: 'taken' as const, actualTime: new Date(), notes }
+          : log
+      )
+    );
+
+    toast({
+      title: "Medication Taken",
+      description: "Great job staying on track with your medication!",
+    });
+  }, [toast]);
+
+  // Snooze reminder
+  const snoozeReminder = useCallback((reminderId: string, minutes: number = 10) => {
+    const reminder = activeReminders.find(r => r.id === reminderId);
+    if (!reminder) return;
+
+    setActiveReminders(prev => 
+      prev.map(r => 
+        r.id === reminderId 
+          ? { ...r, isActive: false }
+          : r
+      )
+    );
+
+    // Schedule snoozed reminder
+    setTimeout(() => {
+      showNotification(reminder.medication, reminder.scheduledTime.toTimeString().slice(0, 5));
+      
+      const snoozeId = `${reminderId}-snooze-${Date.now()}`;
+      const snoozedReminder: ActiveReminder = {
+        ...reminder,
+        id: snoozeId,
+        isActive: true
+      };
+      
+      setActiveReminders(prev => [...prev, snoozedReminder]);
+    }, minutes * 60 * 1000);
+
+    setReminderLogs(prev => 
+      prev.map(log => 
+        log.id.includes(reminderId.split('-')[0])
+          ? { ...log, status: 'snoozed' as const }
+          : log
+      )
+    );
+
+    toast({
+      title: "Reminder Snoozed",
+      description: `You'll be reminded again in ${minutes} minutes.`,
+    });
+  }, [activeReminders, showNotification, toast]);
+
+  // Add medication
+  const addMedication = useCallback((medication: Omit<Medication, 'id'>) => {
+    const newMedication: Medication = {
+      ...medication,
+      id: `med-${Date.now()}`
+    };
+    
+    setMedications(prev => [...prev, newMedication]);
+    
+    if (medication.reminderEnabled) {
+      requestNotificationPermission();
+    }
+  }, [requestNotificationPermission]);
+
+  // Remove medication
+  const removeMedication = useCallback((id: string) => {
+    setMedications(prev => prev.filter(med => med.id !== id));
+    setActiveReminders(prev => prev.filter(reminder => reminder.medication.id !== id));
+  }, []);
+
+  // Update medication
+  const updateMedication = useCallback((id: string, updates: Partial<Medication>) => {
+    setMedications(prev => 
+      prev.map(med => 
+        med.id === id 
+          ? { ...med, ...updates }
+          : med
+      )
+    );
+  }, []);
+
+  // Calculate adherence rate
+  const getAdherenceRate = useCallback((medicationId?: string) => {
+    const logs = medicationId 
+      ? reminderLogs.filter(log => log.medicationId === medicationId)
+      : reminderLogs;
+    
+    if (logs.length === 0) return 100;
     
     const takenCount = logs.filter(log => log.status === 'taken').length;
-    return logs.length > 0 ? (takenCount / logs.length) * 100 : 0;
+    return Math.round((takenCount / logs.length) * 100);
   }, [reminderLogs]);
 
+  // Schedule reminders when medications change
+  useEffect(() => {
+    scheduleReminders();
+  }, [scheduleReminders]);
+
+  // Request permission on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, [requestNotificationPermission]);
+
   return {
-    reminders,
+    medications,
     reminderLogs,
     activeReminders,
-    addReminder,
-    toggleReminder,
-    snoozeReminder,
+    addMedication,
+    removeMedication,
+    updateMedication,
     markAsTaken,
-    getReminderLogs,
+    snoozeReminder,
     getAdherenceRate,
-    requestNotificationPermission,
+    getNextReminderTime
   };
 };

@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useGoogleMapsKey } from '@/hooks/useGoogleMapsKey';
-import { MapPin, AlertTriangle } from 'lucide-react';
+import { MapPin, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface Hospital {
@@ -62,9 +62,19 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
            window.google.maps.InfoWindow;
   };
 
+  // Validate API key format
+  const isValidApiKey = (key: string) => {
+    return key && key.length > 20 && key.startsWith('AIzaSy');
+  };
+
   // Load Google Maps script with API key
   useEffect(() => {
     if (!apiKey || scriptLoaded) return;
+
+    if (!isValidApiKey(apiKey)) {
+      setMapError('Invalid Google Maps API key format. Please check your API key configuration.');
+      return;
+    }
 
     const loadGoogleMaps = () => {
       console.log('Loading Google Maps script with API key');
@@ -77,13 +87,13 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
       }
 
       const script = document.createElement('script');
-      // Remove loading=async to ensure synchronous loading
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-      script.async = false;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
+      script.async = true;
       script.defer = true;
       
-      script.onload = () => {
-        console.log('Google Maps script loaded successfully');
+      // Add global callback function
+      window.initGoogleMaps = () => {
+        console.log('Google Maps script loaded successfully via callback');
         setScriptLoaded(true);
         
         // Wait a bit for the API to be fully ready before initializing
@@ -100,13 +110,20 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
       
       script.onerror = (error) => {
         console.error('Failed to load Google Maps script:', error);
-        setMapError('Failed to load Google Maps script. Please check your internet connection and API key.');
+        setMapError('Failed to load Google Maps. Please check your internet connection and API key configuration.');
       };
       
       document.head.appendChild(script);
     };
 
     loadGoogleMaps();
+
+    // Cleanup function
+    return () => {
+      if (window.initGoogleMaps) {
+        delete window.initGoogleMaps;
+      }
+    };
   }, [apiKey]);
 
   const retryInitialization = () => {
@@ -123,7 +140,7 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
       }, RETRY_DELAY);
     } else {
       console.error('Max retries reached for map initialization');
-      setMapError('Failed to initialize Google Maps after multiple attempts. Please refresh the page.');
+      setMapError('Failed to initialize Google Maps after multiple attempts. Please check your API key permissions and try refreshing the page.');
     }
   };
 
@@ -167,17 +184,17 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
       
       // Provide specific error messages based on error type
       if (error instanceof Error) {
-        if (error.message.includes('InvalidKeyMapError')) {
-          setMapError('Invalid Google Maps API key. Please check your API key configuration.');
+        if (error.message.includes('InvalidKeyMapError') || error.message.includes('ApiNotActivatedMapError')) {
+          setMapError('Google Maps API key error. Please ensure your API key is valid and has Maps JavaScript API enabled in Google Cloud Console.');
         } else if (error.message.includes('RefererNotAllowedMapError')) {
-          setMapError('Domain not authorized for this API key. Please add your domain to the API key restrictions.');
+          setMapError('Domain not authorized for this API key. Please add your domain to the API key restrictions in Google Cloud Console.');
         } else if (error.message.includes('QuotaExceededError')) {
-          setMapError('Google Maps API quota exceeded. Please check your billing and usage limits.');
+          setMapError('Google Maps API quota exceeded. Please check your billing and usage limits in Google Cloud Console.');
         } else {
           setMapError(`Failed to initialize Google Maps: ${error.message}`);
         }
       } else {
-        setMapError('Failed to initialize Google Maps. Please check the API key configuration.');
+        setMapError('Failed to initialize Google Maps. Please check your API key configuration and ensure billing is enabled.');
       }
     }
   };
@@ -313,6 +330,14 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
     };
   }, []);
 
+  const handleRetry = () => {
+    setMapError(null);
+    setScriptLoaded(false);
+    setMapsLoaded(false);
+    setInitRetries(0);
+    window.location.reload();
+  };
+
   if (loading || keyLoading) {
     return (
       <div className="relative h-full min-h-[400px] bg-gray-100 rounded-lg">
@@ -333,20 +358,24 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
           <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Map Configuration Error</h3>
           <p className="text-gray-600 mb-4">{keyError || mapError}</p>
-          <p className="text-sm text-gray-500 mb-4">
-            Please ensure your Google Maps API key is properly configured in Supabase secrets and has the necessary APIs enabled:
-          </p>
-          <ul className="text-sm text-gray-500 mb-4 text-left">
-            <li>• Maps JavaScript API</li>
-            <li>• Places API</li>
-            <li>• Geocoding API</li>
-          </ul>
-          <Button 
-            onClick={() => window.location.reload()} 
-            variant="outline"
-          >
-            Reload Page
-          </Button>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Please ensure your Google Maps API key is properly configured with:
+            </p>
+            <ul className="text-sm text-gray-500 text-left space-y-1">
+              <li>• Maps JavaScript API enabled</li>
+              <li>• Places API enabled</li>
+              <li>• Geocoding API enabled</li>
+              <li>• Billing enabled for your Google Cloud project</li>
+              <li>• Domain restrictions properly configured (if any)</li>
+            </ul>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={handleRetry} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -380,5 +409,12 @@ const HospitalMap: React.FC<HospitalMapProps> = ({
     </div>
   );
 };
+
+// Extend Window interface for the callback
+declare global {
+  interface Window {
+    initGoogleMaps: () => void;
+  }
+}
 
 export default HospitalMap;
