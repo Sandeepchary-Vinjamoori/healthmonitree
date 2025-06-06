@@ -9,7 +9,6 @@ import { motion } from 'framer-motion';
 import CalendarIntegration from './CalendarIntegration';
 import AppointmentCountdown from './AppointmentCountdown';
 import { useAppointmentReminders } from '@/hooks/useAppointmentReminders';
-import NavBar from './NavBar';
 
 interface Appointment {
   id: string;
@@ -93,7 +92,6 @@ const AppointmentScheduler = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
-      <NavBar />
       <div className="container mx-auto px-4 py-20">
         {/* Appointment Countdowns */}
         {visibleAppointments.length > 0 && (
