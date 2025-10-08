@@ -15,7 +15,6 @@ const AuthPage = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [activeTab, setActiveTab] = useState('login');
-  const { signIn, signUp, loading, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -28,22 +27,24 @@ const AuthPage = () => {
     } else {
       setActiveTab('login');
     }
-    
-    // If user is already logged in, redirect to dashboard
-    if (user) {
-      const returnTo = urlParams.get('returnTo');
-      navigate(returnTo || '/dashboard');
-    }
-  }, [location, user, navigate]);
+  }, [location]);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await signIn(email, password);
+    const urlParams = new URLSearchParams(location.search);
+    const returnTo = urlParams.get('returnTo');
+    setTimeout(() => {
+      navigate(returnTo || '/dashboard');
+    }, 1000);
   };
 
-  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignUp = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await signUp(email, password, fullName);
+    const urlParams = new URLSearchParams(location.search);
+    const returnTo = urlParams.get('returnTo');
+    setTimeout(() => {
+      navigate(returnTo || '/dashboard');
+    }, 1000);
   };
 
   const goBack = () => {
@@ -158,9 +159,8 @@ const AuthPage = () => {
                     <Button
                       type="submit"
                       className="w-full bg-teal-600 hover:bg-teal-700"
-                      disabled={loading}
                     >
-                      {loading ? "Logging in..." : "Login"}
+                      Login
                     </Button>
                   </form>
                 </TabsContent>
@@ -219,9 +219,8 @@ const AuthPage = () => {
                     <Button
                       type="submit"
                       className="w-full bg-teal-600 hover:bg-teal-700"
-                      disabled={loading}
                     >
-                      {loading ? "Creating Account..." : "Create Account"}
+                      Create Account
                     </Button>
                   </form>
                 </TabsContent>
